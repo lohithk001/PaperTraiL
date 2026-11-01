@@ -2,8 +2,9 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { 
   Home, 
+  Files, 
   Folder, 
-  Plus, 
+  Upload, 
   Calendar, 
   Settings 
 } from 'lucide-react';
@@ -13,135 +14,148 @@ import { TabScreen } from '../types';
 export const BottomNav: React.FC = () => {
   const { activeTab, setActiveTab, setIsUploadModalOpen } = useDocumentContext();
 
-  const navItems: Array<{
-    id: TabScreen;
-    label: string;
-    icon: React.ComponentType<{ className?: string }>;
-  }> = [
-    { id: 'home', label: 'Home', icon: Home },
-    { id: 'documents', label: 'Documents', icon: Folder },
-    { id: 'reminders', label: 'Reminders', icon: Calendar },
-    { id: 'settings', label: 'Settings', icon: Settings },
-  ];
+  // Hide BottomNav on full-screen flows
+  const hiddenTabs: TabScreen[] = ['splash', 'onboarding', 'auth', 'scan'];
+  if (hiddenTabs.includes(activeTab)) {
+    return null;
+  }
+
+  const isNavActive = (tab: string) => {
+    if (tab === 'home') return activeTab === 'home' || activeTab === 'overview';
+    if (tab === 'folders') return activeTab === 'folders' || activeTab === 'categories';
+    return activeTab === tab;
+  };
 
   return (
-    <div className="fixed bottom-6 left-0 right-0 z-50 flex justify-center px-4 pointer-events-none">
-      <nav className="pointer-events-auto bg-white/95 backdrop-blur-xl border border-slate-200/90 shadow-[0_16px_45px_rgba(20,40,90,0.10)] rounded-full px-5 py-2.5 sm:px-7 sm:py-3 flex items-center gap-3 sm:gap-7 select-none">
+    <div className="fixed bottom-4 left-0 right-0 z-50 flex justify-center px-3 pointer-events-none safe-bottom select-none">
+      <nav className="pointer-events-auto bg-[#F2ECE2]/95 backdrop-blur-xl border border-[#E8DFD3] shadow-xl rounded-full px-2.5 py-1.5 flex items-center gap-1.5 sm:gap-2.5 select-none">
         
         {/* Tab 1: Home */}
-        {(() => {
-          const item = navItems[0];
-          const Icon = item.icon;
-          const isActive = activeTab === item.id;
-          return isActive ? (
+        <div className="relative">
+          {isNavActive('home') ? (
             <motion.button
-              layoutId="activeBottomTab"
-              onClick={() => setActiveTab(item.id)}
-              className="px-4 py-2 sm:px-5 sm:py-2.5 rounded-full bg-[#0861E8] text-white flex items-center gap-2 font-bold text-xs shadow-sm"
+              layoutId="bentoBottomActive"
+              onClick={() => setActiveTab('home')}
+              className="w-11 h-11 rounded-full bg-[#111827] text-white flex items-center justify-center shadow-md cursor-pointer"
               transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+              title="Home Dashboard"
             >
-              <Icon className="w-4 h-4 stroke-[2.4]" />
-              <span>{item.label}</span>
+              <Home className="w-5 h-5 stroke-[2.2]" />
             </motion.button>
           ) : (
             <button
-              onClick={() => setActiveTab(item.id)}
-              className="flex items-center gap-2 px-3 py-2 text-slate-500 hover:text-slate-900 font-bold text-xs transition-colors"
+              onClick={() => setActiveTab('home')}
+              className="w-11 h-11 rounded-full text-[#57534E] hover:text-[#111827] hover:bg-black/5 flex items-center justify-center transition-all cursor-pointer"
+              title="Home Dashboard"
             >
-              <Icon className="w-4 h-4 stroke-[2]" />
-              <span className="hidden sm:inline">{item.label}</span>
+              <Home className="w-5 h-5 stroke-[1.8]" />
             </button>
-          );
-        })()}
+          )}
+        </div>
 
         {/* Tab 2: Documents */}
-        {(() => {
-          const item = navItems[1];
-          const Icon = item.icon;
-          const isActive = activeTab === item.id;
-          return isActive ? (
+        <div className="relative">
+          {isNavActive('documents') ? (
             <motion.button
-              layoutId="activeBottomTab"
-              onClick={() => setActiveTab(item.id)}
-              className="px-4 py-2 sm:px-5 sm:py-2.5 rounded-full bg-[#0861E8] text-white flex items-center gap-2 font-bold text-xs shadow-sm"
+              layoutId="bentoBottomActive"
+              onClick={() => setActiveTab('documents')}
+              className="w-11 h-11 rounded-full bg-[#111827] text-white flex items-center justify-center shadow-md cursor-pointer"
               transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+              title="All Documents"
             >
-              <Icon className="w-4 h-4 stroke-[2.4]" />
-              <span>{item.label}</span>
+              <Files className="w-5 h-5 stroke-[2.2]" />
             </motion.button>
           ) : (
             <button
-              onClick={() => setActiveTab(item.id)}
-              className="flex items-center gap-2 px-3 py-2 text-slate-500 hover:text-slate-900 font-bold text-xs transition-colors"
+              onClick={() => setActiveTab('documents')}
+              className="w-11 h-11 rounded-full text-[#57534E] hover:text-[#111827] hover:bg-black/5 flex items-center justify-center transition-all cursor-pointer"
+              title="All Documents"
             >
-              <Icon className="w-4 h-4 stroke-[2]" />
-              <span className="hidden sm:inline">{item.label}</span>
+              <Files className="w-5 h-5 stroke-[1.8]" />
             </button>
-          );
-        })()}
+          )}
+        </div>
 
-        {/* Center Prominent Floating (+) Action Button */}
-        <motion.button
-          whileHover={{ scale: 1.1, rotate: 90 }}
-          whileTap={{ scale: 0.92 }}
-          onClick={() => setIsUploadModalOpen(true)}
-          title="Upload New Document"
-          className="w-12 h-12 sm:w-13 sm:h-13 rounded-full bg-[#0861E8] hover:bg-[#0752C5] text-white flex items-center justify-center shadow-lg shadow-blue-500/35 border-2 border-white transition-all cursor-pointer"
-        >
-          <Plus className="w-6 h-6 stroke-[3]" />
-        </motion.button>
+        {/* Tab 3: Raised Center Upload Action with Coral/Pink Pip */}
+        <div className="relative px-0.5">
+          <button
+            onClick={() => setIsUploadModalOpen(true)}
+            className="w-12 h-12 rounded-[18px] bg-white hover:bg-white/90 text-[#374151] hover:text-[#111827] flex items-center justify-center shadow-md border border-[#E8DFD3] transition-all cursor-pointer transform -translate-y-1 active:scale-95"
+            title="Upload Document"
+          >
+            <Upload className="w-5 h-5 stroke-[2]" />
+          </button>
+          <span className="absolute top-0 right-1 w-2.5 h-2.5 rounded-full bg-[#FF6B6B] ring-2 ring-[#F2ECE2]"></span>
+        </div>
 
-        {/* Tab 3: Reminders */}
-        {(() => {
-          const item = navItems[2];
-          const Icon = item.icon;
-          const isActive = activeTab === item.id;
-          return isActive ? (
+        {/* Tab 4: Vault Folders */}
+        <div className="relative">
+          {isNavActive('folders') ? (
             <motion.button
-              layoutId="activeBottomTab"
-              onClick={() => setActiveTab(item.id)}
-              className="px-4 py-2 sm:px-5 sm:py-2.5 rounded-full bg-[#0861E8] text-white flex items-center gap-2 font-bold text-xs shadow-sm"
+              layoutId="bentoBottomActive"
+              onClick={() => setActiveTab('folders')}
+              className="w-11 h-11 rounded-full bg-[#111827] text-white flex items-center justify-center shadow-md cursor-pointer"
               transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+              title="Vault Folders"
             >
-              <Icon className="w-4 h-4 stroke-[2.4]" />
-              <span>{item.label}</span>
+              <Folder className="w-5 h-5 stroke-[2.2]" />
             </motion.button>
           ) : (
             <button
-              onClick={() => setActiveTab(item.id)}
-              className="flex items-center gap-2 px-3 py-2 text-slate-500 hover:text-slate-900 font-bold text-xs transition-colors"
+              onClick={() => setActiveTab('folders')}
+              className="w-11 h-11 rounded-full text-[#57534E] hover:text-[#111827] hover:bg-black/5 flex items-center justify-center transition-all cursor-pointer"
+              title="Vault Folders"
             >
-              <Icon className="w-4 h-4 stroke-[2]" />
-              <span className="hidden sm:inline">{item.label}</span>
+              <Folder className="w-5 h-5 stroke-[1.8]" />
             </button>
-          );
-        })()}
+          )}
+        </div>
 
-        {/* Tab 4: Settings */}
-        {(() => {
-          const item = navItems[3];
-          const Icon = item.icon;
-          const isActive = activeTab === item.id;
-          return isActive ? (
+        {/* Tab 5: Reminders */}
+        <div className="relative">
+          {isNavActive('reminders') ? (
             <motion.button
-              layoutId="activeBottomTab"
-              onClick={() => setActiveTab(item.id)}
-              className="px-4 py-2 sm:px-5 sm:py-2.5 rounded-full bg-[#0861E8] text-white flex items-center gap-2 font-bold text-xs shadow-sm"
+              layoutId="bentoBottomActive"
+              onClick={() => setActiveTab('reminders')}
+              className="w-11 h-11 rounded-full bg-[#111827] text-white flex items-center justify-center shadow-md cursor-pointer"
               transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+              title="Lifecycle Reminders"
             >
-              <Icon className="w-4 h-4 stroke-[2.4]" />
-              <span>{item.label}</span>
+              <Calendar className="w-5 h-5 stroke-[2.2]" />
             </motion.button>
           ) : (
             <button
-              onClick={() => setActiveTab(item.id)}
-              className="flex items-center gap-2 px-3 py-2 text-slate-500 hover:text-slate-900 font-bold text-xs transition-colors"
+              onClick={() => setActiveTab('reminders')}
+              className="w-11 h-11 rounded-full text-[#57534E] hover:text-[#111827] hover:bg-black/5 flex items-center justify-center transition-all cursor-pointer"
+              title="Lifecycle Reminders"
             >
-              <Icon className="w-4 h-4 stroke-[2]" />
-              <span className="hidden sm:inline">{item.label}</span>
+              <Calendar className="w-5 h-5 stroke-[1.8]" />
             </button>
-          );
-        })()}
+          )}
+        </div>
+
+        {/* Tab 6: Settings */}
+        <div className="relative">
+          {isNavActive('settings') ? (
+            <motion.button
+              layoutId="bentoBottomActive"
+              onClick={() => setActiveTab('settings')}
+              className="w-11 h-11 rounded-full bg-[#111827] text-white flex items-center justify-center shadow-md cursor-pointer"
+              transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+              title="Settings & Preferences"
+            >
+              <Settings className="w-5 h-5 stroke-[2.2]" />
+            </motion.button>
+          ) : (
+            <button
+              onClick={() => setActiveTab('settings')}
+              className="w-11 h-11 rounded-full text-[#57534E] hover:text-[#111827] hover:bg-black/5 flex items-center justify-center transition-all cursor-pointer"
+              title="Settings & Preferences"
+            >
+              <Settings className="w-5 h-5 stroke-[1.8]" />
+            </button>
+          )}
+        </div>
 
       </nav>
     </div>

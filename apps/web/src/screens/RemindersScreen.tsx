@@ -1,21 +1,25 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
+  SlidersHorizontal, 
+  ChevronRight, 
+  Car, 
+  Laptop, 
+  CreditCard, 
   Calendar, 
-  Clock, 
   CheckCircle2, 
   Circle, 
-  AlertTriangle, 
   Plus, 
-  Trash2, 
-  ShieldAlert,
-  ChevronRight,
+  Trash2,
+  AlertTriangle,
+  Clock,
+  X,
   Bell,
-  Sparkles,
-  ArrowUpRight
+  CalendarCheck2
 } from 'lucide-react';
 import { useDocumentContext } from '../context/DocumentContext';
 import { triggerConfetti } from '../components/Confetti';
+import { ReminderItem } from '../types';
 
 export const RemindersScreen: React.FC = () => {
   const { 
@@ -23,19 +27,24 @@ export const RemindersScreen: React.FC = () => {
     toggleReminder, 
     deleteReminder, 
     addReminder,
-    documents,
-    setSelectedDocument,
-    deviceViewMode 
+    documents
   } = useDocumentContext();
 
-  const [isAdding, setIsAdding] = useState(false);
+  const [activeTabType, setActiveTabType] = useState<'upcoming' | 'completed'>('upcoming');
+  const [isAddOpen, setIsAddOpen] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newDueDate, setNewDueDate] = useState('');
   const [selectedDocId, setSelectedDocId] = useState(documents[0]?.id || '');
 
-  const handleToggle = (id: string, currentlyCompleted: boolean) => {
+  const upcomingList = reminders.filter(r => !r.isCompleted);
+  const completedList = reminders.filter(r => r.isCompleted);
+  const expiringSoonCount = upcomingList.filter(r => r.daysLeft <= 30).length;
+
+  const displayedList = activeTabType === 'upcoming' ? upcomingList : completedList;
+
+  const handleToggle = (id: string, currentlyDone: boolean) => {
     toggleReminder(id);
-    if (!currentlyCompleted) {
+    if (!currentlyDone) {
       triggerConfetti();
     }
   };
@@ -44,14 +53,14 @@ export const RemindersScreen: React.FC = () => {
     e.preventDefault();
     if (!newTitle.trim()) return;
 
-    const doc = documents.find((d) => d.id === selectedDocId) || documents[0];
+    const doc = documents.find(d => d.id === selectedDocId) || documents[0];
     const due = newDueDate || new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0];
     const diffDays = Math.max(1, Math.ceil((new Date(due).getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
 
     addReminder({
       documentId: doc ? doc.id : 'custom',
-      documentTitle: doc ? doc.title : 'Custom Document',
-      title: newTitle,
+      documentTitle: doc ? doc.title : 'Document',
+      title: newTitle.trim(),
       dueDate: due,
       daysLeft: diffDays,
       urgency: diffDays < 15 ? 'critical' : diffDays < 45 ? 'warning' : 'normal',
@@ -61,348 +70,271 @@ export const RemindersScreen: React.FC = () => {
 
     setNewTitle('');
     setNewDueDate('');
-    setIsAdding(false);
+    setIsAddOpen(false);
   };
 
-  const pendingReminders = reminders.filter((r) => !r.isCompleted);
-  const completedReminders = reminders.filter((r) => r.isCompleted);
-
-  const urgentReminders = pendingReminders.filter((r) => r.daysLeft <= 15);
-  const upcomingReminders = pendingReminders.filter((r) => r.daysLeft > 15 && r.daysLeft <= 45);
-  const futureReminders = pendingReminders.filter((r) => r.daysLeft > 45);
+  const getReminderIcon = (title: string, category: string) => {
+    const lower = title.toLowerCase();
+    if (lower.includes('vehicle') || lower.includes('car') || category === 'Vehicle' || category === 'Insurance') {
+      return {
+        icon: <Car className="w-5 h-5 text-[#F5A623]" />,
+        bg: 'bg-[#FFF2E6]',
+      };
+    }
+    if (lower.includes('laptop') || lower.includes('warranty') || category === 'Warranty') {
+      return {
+        icon: <Laptop className="w-5 h-5 text-[#1D5FF0]" />,
+        bg: 'bg-[#EAF1FF]',
+      };
+    }
+    if (lower.includes('credit') || lower.includes('bill') || category === 'Finance') {
+      return {
+        icon: <CreditCard className="w-5 h-5 text-[#7C3AED]" />,
+        bg: 'bg-[#F0EAFE]',
+      };
+    }
+    return {
+      icon: <Calendar className="w-5 h-5 text-[#1D5FF0]" />,
+      bg: 'bg-[#EAF1FF]',
+    };
+  };
 
   return (
-    <div className={`w-full ${deviceViewMode === 'mobile' ? 'px-6 pt-5 pb-8' : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8'}`}>
+    <div className="w-full space-y-6 select-none pb-8">
       
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      {/* 1. Header with Add Reminder Action */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-600 text-xs font-bold uppercase tracking-wider">
-              Automated Alerts
-            </span>
-            <span className="text-xs font-semibold text-charcoal-500">
-              {pendingReminders.length} pending renewals
-            </span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-charcoal-900 tracking-tight">
-            Renewals & Expirations
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#111827] tracking-tight font-display">
+            Reminders & Lifecycle
           </h1>
-          <p className="text-xs sm:text-sm font-medium text-charcoal-500 mt-0.5">
-            Auto-synced with document expiry dates. Email and push notifications configured.
+          <p className="text-xs sm:text-sm font-medium text-[#78716C] mt-1">
+            Track policy renewals, warranties, and official expirations.
           </p>
         </div>
 
+        {/* Primary Add Reminder Button */}
         <button
-          onClick={() => setIsAdding(!isAdding)}
-          className="px-4 py-2 rounded-full bg-primary hover:bg-primary-hover text-white font-bold text-xs flex items-center gap-2 shadow-sm shadow-primary/25 transition-all active:scale-95 self-start sm:self-auto"
+          onClick={() => setIsAddOpen(true)}
+          className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#111827] hover:bg-black text-white text-xs font-bold shadow-xs transition-all cursor-pointer self-start sm:self-auto"
         >
           <Plus className="w-4 h-4 stroke-[2.5]" />
-          <span>{isAdding ? 'Cancel' : 'New Reminder'}</span>
+          <span>Add Reminder</span>
         </button>
       </div>
 
-      {/* Quick Add Form Drawer */}
+      {/* 2. Three Summary Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#E2E8F0] shadow-subtle flex items-center justify-between">
+          <div>
+            <span className="text-xs font-semibold text-[#64748B]">Expiring Soon</span>
+            <p className="text-2xl font-black text-[#F5A623] mt-0.5">{expiringSoonCount}</p>
+            <span className="text-[11px] text-[#64748B]">Next 30 days</span>
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-[#FFF2E6] flex items-center justify-center text-[#F5A623]">
+            <AlertTriangle className="w-5 h-5 stroke-[2.2]" />
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#E2E8F0] shadow-subtle flex items-center justify-between">
+          <div>
+            <span className="text-xs font-semibold text-[#64748B]">Expired Items</span>
+            <p className="text-2xl font-black text-[#64748B] mt-0.5">0</p>
+            <span className="text-[11px] text-emerald-600 font-semibold">All up to date</span>
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-[#64748B]">
+            <Clock className="w-5 h-5" />
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#E2E8F0] shadow-subtle flex items-center justify-between">
+          <div>
+            <span className="text-xs font-semibold text-[#64748B]">Completed</span>
+            <p className="text-2xl font-black text-emerald-600 mt-0.5">{completedList.length}</p>
+            <span className="text-[11px] text-[#64748B]">Successfully renewed</span>
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-[#E8F6EF] flex items-center justify-center text-emerald-600">
+            <CalendarCheck2 className="w-5 h-5" />
+          </div>
+        </div>
+      </div>
+
+      {/* Add Reminder Modal */}
       <AnimatePresence>
-        {isAdding && (
-          <motion.form
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            onSubmit={handleCreate}
-            className="mb-8 p-5 sm:p-6 rounded-3xl bg-white border border-charcoal-200/80 shadow-md space-y-4"
+        {isAddOpen && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs"
           >
-            <h3 className="text-sm font-bold text-charcoal-900">Create Renewal Alert</h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <form
+              onSubmit={handleCreate}
+              className="w-full max-w-md bg-white rounded-3xl p-6 border border-[#E2E8F0] shadow-2xl space-y-4"
+            >
+              <div className="flex items-center justify-between">
+                <h3 className="text-base font-bold text-[#0F172A]">Add Document Reminder</h3>
+                <button 
+                  type="button" 
+                  onClick={() => setIsAddOpen(false)}
+                  className="p-1 rounded-full text-[#64748B] hover:text-[#0F172A]"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
               <div>
-                <label className="block text-xs font-bold text-charcoal-700 mb-1">
-                  Reminder Title
-                </label>
+                <label className="text-xs font-bold text-[#0F172A]">Reminder Title</label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Renew Vehicle Insurance Policy"
+                  autoFocus
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl bg-neutral-50 border border-charcoal-200 text-xs font-medium text-charcoal-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                  placeholder="e.g. Car Insurance Policy Renewal"
+                  className="w-full mt-1.5 h-11 px-4 rounded-xl bg-[#F7F9FC] border border-[#E2E8F0] text-xs font-semibold text-[#0F172A] focus:outline-none focus:border-[#1D5FF0] focus:bg-white transition-all"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-charcoal-700 mb-1">
-                  Linked Document
-                </label>
+                <label className="text-xs font-bold text-[#0F172A]">Linked Document</label>
                 <select
                   value={selectedDocId}
                   onChange={(e) => setSelectedDocId(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl bg-neutral-50 border border-charcoal-200 text-xs font-medium text-charcoal-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary cursor-pointer"
+                  className="w-full mt-1.5 h-11 px-4 rounded-xl bg-[#F7F9FC] border border-[#E2E8F0] text-xs font-semibold text-[#0F172A] focus:outline-none focus:border-[#1D5FF0] focus:bg-white transition-all"
                 >
-                  {documents.map((d) => (
-                    <option key={d.id} value={d.id}>
-                      {d.title} ({d.category})
-                    </option>
+                  {documents.map(d => (
+                    <option key={d.id} value={d.id}>{d.title} ({d.category})</option>
                   ))}
                 </select>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-charcoal-700 mb-1">
-                  Due Expiry Date
-                </label>
+                <label className="text-xs font-bold text-[#0F172A]">Due Date</label>
                 <input
                   type="date"
                   required
                   value={newDueDate}
                   onChange={(e) => setNewDueDate(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl bg-neutral-50 border border-charcoal-200 text-xs font-medium text-charcoal-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary cursor-pointer"
+                  className="w-full mt-1.5 h-11 px-4 rounded-xl bg-[#F7F9FC] border border-[#E2E8F0] text-xs font-semibold text-[#0F172A] focus:outline-none focus:border-[#1D5FF0] focus:bg-white transition-all"
                 />
               </div>
-            </div>
 
-            <div className="flex justify-end gap-2 pt-2">
-              <button
-                type="button"
-                onClick={() => setIsAdding(false)}
-                className="px-4 py-1.5 rounded-full bg-neutral-100 hover:bg-neutral-200 text-charcoal-700 font-bold text-xs"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-5 py-1.5 rounded-full bg-primary hover:bg-primary-hover text-white font-bold text-xs shadow-xs"
-              >
-                Schedule Alert
-              </button>
-            </div>
-          </motion.form>
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsAddOpen(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-[#64748B] hover:bg-slate-100 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2.5 rounded-xl bg-[#1D5FF0] text-white font-bold text-xs shadow-card hover:bg-[#0752D9] transition-colors cursor-pointer"
+                >
+                  Save Reminder
+                </button>
+              </div>
+            </form>
+          </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Desktop 3-Column Urgency Board */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        
-        {/* Column 1: Critical Urgency (< 15 Days) */}
-        <div className="p-5 rounded-3xl bg-white border border-rose-200/80 shadow-xs flex flex-col">
-          <div className="flex items-center justify-between pb-3 mb-4 border-b border-rose-100">
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse"></span>
-              <h2 className="text-sm font-extrabold text-charcoal-900 uppercase tracking-wider">
-                Urgent Action (&lt; 15d)
-              </h2>
-            </div>
-            <span className="text-xs font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full">
-              {urgentReminders.length}
-            </span>
-          </div>
-
-          <div className="space-y-3 flex-1">
-            {urgentReminders.length === 0 ? (
-              <p className="text-xs text-charcoal-400 italic py-6 text-center">
-                No critical expirations due soon.
-              </p>
-            ) : (
-              urgentReminders.map((r) => (
-                <div 
-                  key={r.id}
-                  className="p-4 rounded-2xl bg-rose-50/50 border border-rose-200/60 flex items-start gap-3 hover:bg-rose-50 transition-colors"
-                >
-                  <button
-                    onClick={() => handleToggle(r.id, r.isCompleted)}
-                    className="mt-0.5 text-charcoal-400 hover:text-emerald-600 transition-colors shrink-0"
-                    title="Mark completed"
-                  >
-                    <Circle className="w-5 h-5 stroke-[2]" />
-                  </button>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold text-charcoal-900 leading-tight">
-                      {r.title}
-                    </p>
-                    <p className="text-[11px] font-medium text-charcoal-500 truncate mt-0.5">
-                      {r.documentTitle}
-                    </p>
-                    <div className="flex items-center gap-2 mt-2">
-                      <span className="text-[10px] font-bold text-rose-600 bg-white px-2 py-0.5 rounded border border-rose-200">
-                        {r.daysLeft} days left
-                      </span>
-                      <span className="text-[10px] text-charcoal-400 font-medium">
-                        Due {r.dueDate}
-                      </span>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => deleteReminder(r.id)}
-                    className="p-1 text-charcoal-400 hover:text-rose-600 transition-colors"
-                    title="Delete"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              ))
-            )}
-          </div>
+      {/* 3. Upcoming vs Completed Tabs */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center p-1 rounded-2xl bg-white border border-[#E2E8F0] shadow-subtle">
+          <button
+            onClick={() => setActiveTabType('upcoming')}
+            className={`px-5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              activeTabType === 'upcoming'
+                ? 'bg-[#1D5FF0] text-white shadow-card'
+                : 'text-[#64748B] hover:text-[#0F172A]'
+            }`}
+          >
+            Upcoming ({upcomingList.length})
+          </button>
+          <button
+            onClick={() => setActiveTabType('completed')}
+            className={`px-5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              activeTabType === 'completed'
+                ? 'bg-[#1D5FF0] text-white shadow-card'
+                : 'text-[#64748B] hover:text-[#0F172A]'
+            }`}
+          >
+            Completed ({completedList.length})
+          </button>
         </div>
-
-        {/* Column 2: Approaching (15 - 45 Days) */}
-        <div className="p-5 rounded-3xl bg-white border border-amber-200/80 shadow-xs flex flex-col">
-          <div className="flex items-center justify-between pb-3 mb-4 border-b border-amber-100">
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
-              <h2 className="text-sm font-extrabold text-charcoal-900 uppercase tracking-wider">
-                Approaching (15 - 45d)
-              </h2>
-            </div>
-            <span className="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
-              {upcomingReminders.length}
-            </span>
-          </div>
-
-          <div className="space-y-3 flex-1">
-            {upcomingReminders.length === 0 ? (
-              <p className="text-xs text-charcoal-400 italic py-6 text-center">
-                No approaching renewals in this window.
-              </p>
-            ) : (
-              upcomingReminders.map((r) => (
-                <div 
-                  key={r.id}
-                  className="p-4 rounded-2xl bg-amber-50/40 border border-amber-200/60 flex items-start gap-3 hover:bg-amber-50 transition-colors"
-                >
-                  <button
-                    onClick={() => handleToggle(r.id, r.isCompleted)}
-                    className="mt-0.5 text-charcoal-400 hover:text-emerald-600 transition-colors shrink-0"
-                    title="Mark completed"
-                  >
-                    <Circle className="w-5 h-5 stroke-[2]" />
-                  </button>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold text-charcoal-900 leading-tight">
-                      {r.title}
-                    </p>
-                    <p className="text-[11px] font-medium text-charcoal-500 truncate mt-0.5">
-                      {r.documentTitle}
-                    </p>
-                    <div className="flex items-center gap-2 mt-2">
-                      <span className="text-[10px] font-bold text-amber-700 bg-white px-2 py-0.5 rounded border border-amber-200">
-                        {r.daysLeft} days left
-                      </span>
-                      <span className="text-[10px] text-charcoal-400 font-medium">
-                        Due {r.dueDate}
-                      </span>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => deleteReminder(r.id)}
-                    className="p-1 text-charcoal-400 hover:text-rose-600 transition-colors"
-                    title="Delete"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-
-        {/* Column 3: Future & Healthy (> 45 Days) */}
-        <div className="p-5 rounded-3xl bg-white border border-charcoal-200/80 shadow-xs flex flex-col">
-          <div className="flex items-center justify-between pb-3 mb-4 border-b border-charcoal-100">
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-              <h2 className="text-sm font-extrabold text-charcoal-900 uppercase tracking-wider">
-                Future / Healthy (&gt; 45d)
-              </h2>
-            </div>
-            <span className="text-xs font-bold text-charcoal-600 bg-neutral-100 px-2 py-0.5 rounded-full">
-              {futureReminders.length}
-            </span>
-          </div>
-
-          <div className="space-y-3 flex-1">
-            {futureReminders.length === 0 ? (
-              <p className="text-xs text-charcoal-400 italic py-6 text-center">
-                All reminders fall into shorter windows.
-              </p>
-            ) : (
-              futureReminders.map((r) => (
-                <div 
-                  key={r.id}
-                  className="p-4 rounded-2xl bg-neutral-50/70 border border-charcoal-200/60 flex items-start gap-3 hover:bg-neutral-100/70 transition-colors"
-                >
-                  <button
-                    onClick={() => handleToggle(r.id, r.isCompleted)}
-                    className="mt-0.5 text-charcoal-400 hover:text-emerald-600 transition-colors shrink-0"
-                    title="Mark completed"
-                  >
-                    <Circle className="w-5 h-5 stroke-[2]" />
-                  </button>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold text-charcoal-900 leading-tight">
-                      {r.title}
-                    </p>
-                    <p className="text-[11px] font-medium text-charcoal-500 truncate mt-0.5">
-                      {r.documentTitle}
-                    </p>
-                    <div className="flex items-center gap-2 mt-2">
-                      <span className="text-[10px] font-bold text-charcoal-600 bg-white px-2 py-0.5 rounded border border-charcoal-200">
-                        {r.daysLeft} days left
-                      </span>
-                      <span className="text-[10px] text-charcoal-400 font-medium">
-                        Due {r.dueDate}
-                      </span>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => deleteReminder(r.id)}
-                    className="p-1 text-charcoal-400 hover:text-rose-600 transition-colors"
-                    title="Delete"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-
       </div>
 
-      {/* Completed Renewals Section */}
-      {completedReminders.length > 0 && (
-        <div className="bg-white rounded-3xl p-6 border border-charcoal-200/80 shadow-xs">
-          <h2 className="text-sm font-bold text-charcoal-900 uppercase tracking-wider mb-4 flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-            <span>Completed Renewals ({completedReminders.length})</span>
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {completedReminders.map((r) => (
-              <div 
-                key={r.id}
-                className="p-3.5 rounded-2xl bg-neutral-50/70 border border-charcoal-200/60 flex items-center justify-between gap-3 opacity-70 hover:opacity-100 transition-opacity"
-              >
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <button
-                    onClick={() => handleToggle(r.id, r.isCompleted)}
-                    className="text-emerald-600 shrink-0"
-                    title="Mark active again"
-                  >
-                    <CheckCircle2 className="w-4 h-4 fill-emerald-100" />
-                  </button>
-                  <p className="text-xs font-semibold text-charcoal-700 line-through truncate">
-                    {r.title}
-                  </p>
-                </div>
+      {/* 4. Reminder List Rows */}
+      <div className="bg-white rounded-3xl border border-[#E2E8F0] shadow-subtle divide-y divide-[#E2E8F0] overflow-hidden">
+        {displayedList.map((rem, idx) => {
+          const { icon, bg } = getReminderIcon(rem.title, rem.category);
+
+          return (
+            <motion.div
+              key={rem.id}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: idx * 0.03 }}
+              className="p-4 sm:p-5 flex items-center justify-between gap-4 hover:bg-[#F7F9FC] transition-colors group"
+            >
+              {/* Left: Checkbox & Info */}
+              <div className="flex items-center gap-4 min-w-0">
                 <button
-                  onClick={() => deleteReminder(r.id)}
-                  className="p-1 text-charcoal-400 hover:text-rose-600 transition-colors shrink-0"
+                  onClick={() => handleToggle(rem.id, rem.isCompleted)}
+                  className="shrink-0 cursor-pointer"
+                  title={rem.isCompleted ? 'Mark as incomplete' : 'Mark as complete'}
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
+                  {rem.isCompleted ? (
+                    <CheckCircle2 className="w-6 h-6 text-emerald-600 fill-emerald-100" />
+                  ) : (
+                    <Circle className="w-6 h-6 text-slate-300 hover:text-[#1D5FF0] transition-colors" />
+                  )}
+                </button>
+
+                <div className={`w-11 h-11 rounded-2xl ${bg} flex items-center justify-center shrink-0`}>
+                  {icon}
+                </div>
+
+                <div className="min-w-0">
+                  <h3 className={`text-sm sm:text-base font-bold text-[#0F172A] truncate ${rem.isCompleted ? 'line-through text-slate-400' : ''}`}>
+                    {rem.title}
+                  </h3>
+                  <div className="flex items-center gap-2 mt-0.5 text-xs text-[#64748B]">
+                    <span className="font-medium text-[#1D5FF0]">{rem.documentTitle}</span>
+                    <span>•</span>
+                    <span>Due: {rem.dueDate}</span>
+                    <span>•</span>
+                    <span className={rem.daysLeft <= 15 ? 'text-[#F04452] font-semibold' : 'text-[#F5A623] font-semibold'}>
+                      {rem.daysLeft > 0 ? `in ${rem.daysLeft} days` : 'Due today'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right: Actions */}
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={() => deleteReminder(rem.id)}
+                  className="p-2 rounded-xl text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-colors cursor-pointer"
+                  title="Delete Reminder"
+                >
+                  <Trash2 className="w-4 h-4" />
                 </button>
               </div>
-            ))}
+            </motion.div>
+          );
+        })}
+
+        {displayedList.length === 0 && (
+          <div className="text-center py-12 p-6">
+            <Calendar className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+            <h4 className="text-sm font-bold text-[#0F172A]">No {activeTabType} reminders</h4>
+            <p className="text-xs text-[#64748B] mt-0.5">You're all caught up on document deadlines!</p>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
     </div>
   );

@@ -1,19 +1,21 @@
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  ShieldCheck, 
-  Lock, 
-  Fingerprint, 
-  Download, 
-  Trash2, 
   User, 
   HardDrive, 
   Bell, 
+  Shield, 
   HelpCircle, 
-  Check, 
-  RefreshCcw,
+  Info, 
+  ChevronRight, 
+  LogOut, 
+  Download, 
   Sparkles,
-  ExternalLink,
-  Key
+  Key,
+  Smartphone,
+  CheckCircle2,
+  Lock,
+  X
 } from 'lucide-react';
 import { useDocumentContext } from '../context/DocumentContext';
 import { triggerConfetti } from '../components/Confetti';
@@ -21,23 +23,18 @@ import { triggerConfetti } from '../components/Confetti';
 export const SettingsScreen: React.FC = () => {
   const { 
     userProfile, 
-    updateUserProfile, 
+    updateUserProfile,
     documents, 
     reminders,
-    deviceViewMode 
+    setActiveTab 
   } = useDocumentContext();
 
-  const [name, setName] = useState(userProfile.name);
-  const [tagline, setTagline] = useState(userProfile.tagline);
-  const [isSaved, setIsSaved] = useState(false);
-
-  const handleSaveProfile = (e: React.FormEvent) => {
-    e.preventDefault();
-    updateUserProfile({ name, tagline });
-    setIsSaved(true);
-    triggerConfetti();
-    setTimeout(() => setIsSaved(false), 2000);
-  };
+  const [activeModal, setActiveModal] = useState<string | null>(null);
+  const [nameInput, setNameInput] = useState(userProfile.name);
+  const [emailInput, setEmailInput] = useState(userProfile.email);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [emailAlertsEnabled, setEmailAlertsEnabled] = useState(true);
+  const [biometricsEnabled, setBiometricsEnabled] = useState(userProfile.biometricEnabled);
 
   const handleExportBackup = () => {
     const backupData = {
@@ -59,228 +56,369 @@ export const SettingsScreen: React.FC = () => {
     triggerConfetti();
   };
 
+  const handleSaveProfile = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateUserProfile({ name: nameInput, email: emailInput });
+    setActiveModal(null);
+  };
+
   return (
-    <div className={`w-full ${deviceViewMode === 'mobile' ? 'px-6 pt-5 pb-8 space-y-5' : 'max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8'}`}>
+    <div className="w-full max-w-4xl space-y-6 select-none pb-8">
       
-      {/* Header */}
+      {/* 1. Header */}
       <div>
-        <div className="flex items-center gap-2 mb-1">
-          <span className="px-2.5 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider">
-            Configuration
-          </span>
-        </div>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-charcoal-900 tracking-tight">
-          Vault & Profile Settings
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-[#111827] tracking-tight font-display">
+          Vault Settings
         </h1>
-        <p className="text-xs sm:text-sm font-medium text-charcoal-500 mt-0.5">
-          Manage zero-knowledge encryption, biometric authentication, and user preferences.
+        <p className="text-xs sm:text-sm font-medium text-[#78716C] mt-1">
+          Personal profile, vault encryption, storage allocation, and device sync.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        
-        {/* Left Column: Profile Card */}
-        <div className="space-y-6">
-          <div className="p-6 rounded-3xl bg-white border border-charcoal-200/80 shadow-xs">
-            <h2 className="text-sm font-bold text-charcoal-900 uppercase tracking-wider mb-4 flex items-center gap-2">
-              <User className="w-4 h-4 text-primary" />
-              <span>Personal Vault Identity</span>
-            </h2>
-
-            <form onSubmit={handleSaveProfile} className="space-y-4">
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-pink-200 to-indigo-100 flex items-center justify-center font-extrabold text-base text-primary border-2 border-white shadow-xs ring-2 ring-primary/20">
-                  {name.split(' ').map(n => n[0]).join('')}
-                </div>
-
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-sm font-bold text-charcoal-900 truncate">{name}</span>
-                    <ShieldCheck className="w-4 h-4 text-primary fill-primary/10 shrink-0" />
-                  </div>
-                  <span className="text-xs font-semibold text-primary">{tagline}</span>
-                  <p className="text-[11px] text-charcoal-400 mt-0.5">{userProfile.email}</p>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-charcoal-700 mb-1">
-                  Full Name
-                </label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl bg-neutral-50 border border-charcoal-200 text-xs font-medium text-charcoal-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-charcoal-700 mb-1">
-                  Vault Tagline / Role
-                </label>
-                <input
-                  type="text"
-                  value={tagline}
-                  onChange={(e) => setTagline(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl bg-neutral-50 border border-charcoal-200 text-xs font-medium text-charcoal-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                />
-              </div>
-
-              <button
-                type="submit"
-                className="w-full py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs font-bold shadow-xs transition-colors flex items-center justify-center gap-2 active:scale-98"
-              >
-                {isSaved ? (
-                  <>
-                    <Check className="w-4 h-4" />
-                    <span>Saved Changes</span>
-                  </>
-                ) : (
-                  <span>Save Profile</span>
-                )}
-              </button>
-            </form>
+      {/* 2. User Profile Card */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        onClick={() => setActiveModal('profile')}
+        className="bg-white rounded-3xl p-5 sm:p-6 border border-[#E2E8F0] shadow-subtle hover:border-[#1D5FF0]/40 transition-all flex items-center justify-between gap-4 cursor-pointer group"
+      >
+        <div className="flex items-center gap-4">
+          <div className="w-14 h-14 rounded-2xl overflow-hidden ring-2 ring-slate-100 shrink-0">
+            <img
+              src={userProfile.avatarUrl}
+              alt={userProfile.name}
+              className="w-full h-full object-cover"
+            />
           </div>
 
-          {/* Cloud Storage Usage */}
-          <div className="p-6 rounded-3xl bg-white border border-charcoal-200/80 shadow-xs">
+          <div>
+            <h2 className="text-base sm:text-lg font-bold text-[#0F172A] group-hover:text-[#1D5FF0] transition-colors">
+              {userProfile.name}
+            </h2>
+            <p className="text-xs text-[#64748B] mt-0.5">
+              {userProfile.email}
+            </p>
+            <span className="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200">
+              Verified Vault Owner
+            </span>
+          </div>
+        </div>
+
+        <button className="px-3.5 py-1.5 rounded-xl bg-[#F7F9FC] text-xs font-bold text-[#1D5FF0] group-hover:bg-[#EAF1FF] transition-colors">
+          Edit Profile
+        </button>
+      </motion.div>
+
+      {/* 3. Settings Sections Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        
+        {/* Storage Card */}
+        <div 
+          onClick={() => setActiveTab('storage')}
+          className="bg-white rounded-3xl p-5 border border-[#E2E8F0] shadow-subtle hover:border-[#1D5FF0]/40 transition-all cursor-pointer group flex flex-col justify-between"
+        >
+          <div>
             <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <HardDrive className="w-4 h-4 text-primary" />
-                <h2 className="text-sm font-bold text-charcoal-900 uppercase tracking-wider">
-                  Storage Allocation
-                </h2>
+              <div className="w-10 h-10 rounded-xl bg-[#EAF1FF] text-[#1D5FF0] flex items-center justify-center">
+                <HardDrive className="w-5 h-5 stroke-[2.2]" />
               </div>
-              <span className="text-xs font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
-                {userProfile.storageUsed} / {userProfile.storageTotal}
-              </span>
+              <span className="text-xs font-bold text-[#1D5FF0]">72% used</span>
             </div>
-
-            <div className="w-full h-2.5 bg-neutral-100 rounded-full overflow-hidden mt-2">
-              <div
-                className="h-full bg-gradient-to-r from-primary to-cyan-400 rounded-full"
-                style={{ width: '4%' }}
-              ></div>
+            <h3 className="text-sm font-bold text-[#0F172A] group-hover:text-[#1D5FF0] transition-colors">
+              Storage Usage
+            </h3>
+            <p className="text-xs text-[#64748B] mt-1">
+              {userProfile.storageUsed} of {userProfile.storageTotal} used across PDFs, images and scans.
+            </p>
+            <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden mt-3">
+              <div className="h-full bg-[#1D5FF0] rounded-full w-[72%]"></div>
             </div>
+          </div>
+          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-[#1D5FF0]">
+            <span>Manage Storage</span>
+            <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+          </div>
+        </div>
 
-            <p className="text-xs font-medium text-charcoal-500 mt-3">
-              {documents.length} encrypted documents stored. Cloudflare R2 private bucket active.
+        {/* Security Card */}
+        <div 
+          onClick={() => setActiveModal('security')}
+          className="bg-white rounded-3xl p-5 border border-[#E2E8F0] shadow-subtle hover:border-[#1D5FF0]/40 transition-all cursor-pointer group flex flex-col justify-between"
+        >
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-10 h-10 rounded-xl bg-[#E8F6EF] text-[#27A879] flex items-center justify-center">
+                <Shield className="w-5 h-5 stroke-[2.2]" />
+              </div>
+              <span className="text-xs font-bold text-emerald-600">AES-256 Active</span>
+            </div>
+            <h3 className="text-sm font-bold text-[#0F172A] group-hover:text-[#1D5FF0] transition-colors">
+              Vault Security & Biometrics
+            </h3>
+            <p className="text-xs text-[#64748B] mt-1">
+              Zero-knowledge encryption keys and biometric app unlock on Android devices.
             </p>
           </div>
+          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-[#1D5FF0]">
+            <span>Security Settings</span>
+            <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+          </div>
         </div>
 
-        {/* Right Column: Security & Cryptography + Backup */}
-        <div className="space-y-6">
-          <div className="p-6 rounded-3xl bg-white border border-charcoal-200/80 shadow-xs space-y-4">
-            <div className="flex items-center gap-2 mb-1">
-              <Lock className="w-4 h-4 text-primary" />
-              <h2 className="text-sm font-bold text-charcoal-900 uppercase tracking-wider">
-                Security & Cryptography
-              </h2>
-            </div>
-
-            {/* AES 256 Toggle */}
-            <div className="flex items-center justify-between py-2 border-b border-charcoal-100">
-              <div>
-                <p className="text-xs font-bold text-charcoal-900">AES-256 Vault Encryption</p>
-                <p className="text-[11px] text-charcoal-500">Client-side zero-knowledge document seals</p>
+        {/* Notifications Card */}
+        <div 
+          onClick={() => setActiveModal('notifications')}
+          className="bg-white rounded-3xl p-5 border border-[#E2E8F0] shadow-subtle hover:border-[#1D5FF0]/40 transition-all cursor-pointer group flex flex-col justify-between"
+        >
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-10 h-10 rounded-xl bg-[#FFF2E6] text-[#F5A623] flex items-center justify-center">
+                <Bell className="w-5 h-5 stroke-[2.2]" />
               </div>
-              <button
-                onClick={() =>
-                  updateUserProfile({ encryptionEnabled: !userProfile.encryptionEnabled })
-                }
-                className={`w-12 h-6.5 rounded-full transition-colors relative p-0.5 ${
-                  userProfile.encryptionEnabled ? 'bg-primary' : 'bg-neutral-300'
-                }`}
-              >
-                <div
-                  className={`w-5.5 h-5.5 rounded-full bg-white shadow-xs transform transition-transform ${
-                    userProfile.encryptionEnabled ? 'translate-x-5.5' : 'translate-x-0'
-                  }`}
-                />
-              </button>
+              <span className="text-xs font-bold text-[#F5A623]">Alerts On</span>
             </div>
+            <h3 className="text-sm font-bold text-[#0F172A] group-hover:text-[#1D5FF0] transition-colors">
+              Notifications & Expiry Alerts
+            </h3>
+            <p className="text-xs text-[#64748B] mt-1">
+              Manage automatic reminder timelines (30 days, 15 days, 3 days).
+            </p>
+          </div>
+          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-[#1D5FF0]">
+            <span>Configure Alerts</span>
+            <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+          </div>
+        </div>
 
-            {/* Biometric Toggle */}
-            <div className="flex items-center justify-between py-2 border-b border-charcoal-100">
-              <div>
-                <p className="text-xs font-bold text-charcoal-900">Biometric Touch / Face ID</p>
-                <p className="text-[11px] text-charcoal-500">Hardware security key or biometric prompt</p>
+        {/* Help & Support Card */}
+        <div 
+          onClick={() => setActiveTab('help')}
+          className="bg-white rounded-3xl p-5 border border-[#E2E8F0] shadow-subtle hover:border-[#1D5FF0]/40 transition-all cursor-pointer group flex flex-col justify-between"
+        >
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-10 h-10 rounded-xl bg-[#F0EAFE] text-[#7C3AED] flex items-center justify-center">
+                <HelpCircle className="w-5 h-5 stroke-[2.2]" />
               </div>
-              <button
-                onClick={() =>
-                  updateUserProfile({ biometricEnabled: !userProfile.biometricEnabled })
-                }
-                className={`w-12 h-6.5 rounded-full transition-colors relative p-0.5 ${
-                  userProfile.biometricEnabled ? 'bg-primary' : 'bg-neutral-300'
-                }`}
-              >
-                <div
-                  className={`w-5.5 h-5.5 rounded-full bg-white shadow-xs transform transition-transform ${
-                    userProfile.biometricEnabled ? 'translate-x-5.5' : 'translate-x-0'
-                  }`}
-                />
-              </button>
+              <span className="text-xs font-bold text-[#7C3AED]">Knowledge Base</span>
             </div>
+            <h3 className="text-sm font-bold text-[#0F172A] group-hover:text-[#1D5FF0] transition-colors">
+              Help & Support
+            </h3>
+            <p className="text-xs text-[#64748B] mt-1">
+              Access PaperTrail AI assistant, security audit docs, and FAQ articles.
+            </p>
+          </div>
+          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-[#1D5FF0]">
+            <span>Open Help Center</span>
+            <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+          </div>
+        </div>
 
-            {/* Key rotation status */}
-            <div className="flex items-center justify-between py-2">
-              <div className="flex items-center gap-2.5">
-                <Key className="w-4 h-4 text-emerald-600" />
-                <div>
-                  <p className="text-xs font-bold text-charcoal-900">Master Key Status</p>
-                  <p className="text-[11px] text-charcoal-500">Rotated 14 days ago • Valid</p>
+      </div>
+
+      {/* 4. Vault Backup & About PaperTrail */}
+      <div className="bg-white rounded-3xl p-5 sm:p-6 border border-[#E2E8F0] shadow-subtle flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h3 className="text-sm font-bold text-[#0F172A]">Export Encrypted Vault Backup</h3>
+          <p className="text-xs text-[#64748B] mt-0.5">
+            Download an offline JSON snapshot of your 24 documents and reminders metadata.
+          </p>
+        </div>
+
+        <button
+          onClick={handleExportBackup}
+          className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#F7F9FC] hover:bg-slate-100 border border-[#E2E8F0] text-[#0F172A] text-xs font-bold transition-all shadow-subtle cursor-pointer self-start sm:self-auto"
+        >
+          <Download className="w-4 h-4 text-[#1D5FF0]" />
+          <span>Export Backup</span>
+        </button>
+      </div>
+
+      {/* Profile Edit Modal */}
+      <AnimatePresence>
+        {activeModal === 'profile' && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs"
+          >
+            <form
+              onSubmit={handleSaveProfile}
+              className="w-full max-w-md bg-white rounded-3xl p-6 border border-[#E2E8F0] shadow-2xl space-y-4"
+            >
+              <div className="flex items-center justify-between">
+                <h3 className="text-base font-bold text-[#0F172A]">Edit Profile Details</h3>
+                <button 
+                  type="button" 
+                  onClick={() => setActiveModal(null)}
+                  className="p-1 rounded-full text-[#64748B] hover:text-[#0F172A]"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-[#0F172A]">Full Name</label>
+                <input
+                  type="text"
+                  required
+                  value={nameInput}
+                  onChange={(e) => setNameInput(e.target.value)}
+                  className="w-full mt-1.5 h-11 px-4 rounded-xl bg-[#F7F9FC] border border-[#E2E8F0] text-xs font-semibold text-[#0F172A] focus:outline-none focus:border-[#1D5FF0] focus:bg-white"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-[#0F172A]">Email Address</label>
+                <input
+                  type="email"
+                  required
+                  value={emailInput}
+                  onChange={(e) => setEmailInput(e.target.value)}
+                  className="w-full mt-1.5 h-11 px-4 rounded-xl bg-[#F7F9FC] border border-[#E2E8F0] text-xs font-semibold text-[#0F172A] focus:outline-none focus:border-[#1D5FF0] focus:bg-white"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveModal(null)}
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-[#64748B] hover:bg-slate-100"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2.5 rounded-xl bg-[#1D5FF0] text-white font-bold text-xs shadow-card hover:bg-[#0752D9] cursor-pointer"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Security Settings Modal */}
+      <AnimatePresence>
+        {activeModal === 'security' && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs"
+          >
+            <div className="w-full max-w-md bg-white rounded-3xl p-6 border border-[#E2E8F0] shadow-2xl space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-base font-bold text-[#0F172A]">Vault Security & Encryption</h3>
+                <button 
+                  onClick={() => setActiveModal(null)}
+                  className="p-1 rounded-full text-[#64748B] hover:text-[#0F172A]"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-3.5 rounded-2xl bg-[#F7F9FC] border border-[#E2E8F0]">
+                  <div>
+                    <p className="text-xs font-bold text-[#0F172A]">Biometric App Lock</p>
+                    <p className="text-[11px] text-[#64748B]">Unlock with fingerprint or face recognition</p>
+                  </div>
+                  <input 
+                    type="checkbox" 
+                    checked={biometricsEnabled} 
+                    onChange={(e) => setBiometricsEnabled(e.target.checked)} 
+                    className="w-4 h-4 text-[#1D5FF0] rounded cursor-pointer"
+                  />
+                </div>
+
+                <div className="p-3.5 rounded-2xl bg-[#E8F6EF] border border-[#27A879]/30 text-xs">
+                  <div className="flex items-center gap-2 font-bold text-[#27A879]">
+                    <Shield className="w-4 h-4" />
+                    AES-256 Envelope Encryption Active
+                  </div>
+                  <p className="text-[#64748B] text-[11px] mt-1">
+                    Every document is encrypted with a distinct master data key before being stored on Cloudflare R2 / Neon PostgreSQL.
+                  </p>
                 </div>
               </div>
-              <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full">
-                Active
-              </span>
+
+              <div className="flex justify-end pt-2">
+                <button
+                  onClick={() => setActiveModal(null)}
+                  className="px-5 py-2.5 rounded-xl bg-[#1D5FF0] text-white font-bold text-xs shadow-card hover:bg-[#0752D9] cursor-pointer"
+                >
+                  Done
+                </button>
+              </div>
             </div>
-          </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-          {/* Backup & Data Actions */}
-          <div className="p-6 rounded-3xl bg-white border border-charcoal-200/80 shadow-xs space-y-3">
-            <h2 className="text-sm font-bold text-charcoal-900 uppercase tracking-wider mb-2">
-              Vault Backup & Data Management
-            </h2>
-
-            <button
-              onClick={handleExportBackup}
-              className="w-full py-3 px-4 rounded-2xl bg-neutral-50 hover:bg-neutral-100 border border-charcoal-200 text-xs font-bold text-charcoal-800 flex items-center justify-between transition-colors"
-            >
-              <div className="flex items-center gap-2.5">
-                <Download className="w-4 h-4 text-primary" />
-                <span>Export Encrypted Vault Backup (.json)</span>
+      {/* Notifications Modal */}
+      <AnimatePresence>
+        {activeModal === 'notifications' && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs"
+          >
+            <div className="w-full max-w-md bg-white rounded-3xl p-6 border border-[#E2E8F0] shadow-2xl space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-base font-bold text-[#0F172A]">Notification Preferences</h3>
+                <button 
+                  onClick={() => setActiveModal(null)}
+                  className="p-1 rounded-full text-[#64748B] hover:text-[#0F172A]"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
-              <ExternalLink className="w-3.5 h-3.5 text-charcoal-400" />
-            </button>
 
-            <button
-              onClick={() => {
-                if (window.confirm('Reset all PaperTrail vault data to defaults?')) {
-                  localStorage.clear();
-                  window.location.reload();
-                }
-              }}
-              className="w-full py-3 px-4 rounded-2xl bg-rose-50 hover:bg-rose-100/80 border border-rose-200 text-xs font-bold text-rose-700 flex items-center justify-between transition-colors"
-            >
-              <div className="flex items-center gap-2.5">
-                <Trash2 className="w-4 h-4 text-rose-600" />
-                <span>Clear Local Vault Storage</span>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-3.5 rounded-2xl bg-[#F7F9FC] border border-[#E2E8F0]">
+                  <div>
+                    <p className="text-xs font-bold text-[#0F172A]">Expiry Reminders</p>
+                    <p className="text-[11px] text-[#64748B]">Push notifications 30, 15, and 3 days before expiry</p>
+                  </div>
+                  <input 
+                    type="checkbox" 
+                    checked={notificationsEnabled} 
+                    onChange={(e) => setNotificationsEnabled(e.target.checked)} 
+                    className="w-4 h-4 text-[#1D5FF0] rounded cursor-pointer"
+                  />
+                </div>
+
+                <div className="flex items-center justify-between p-3.5 rounded-2xl bg-[#F7F9FC] border border-[#E2E8F0]">
+                  <div>
+                    <p className="text-xs font-bold text-[#0F172A]">Email Digest</p>
+                    <p className="text-[11px] text-[#64748B]">Monthly vault summary sent to {userProfile.email}</p>
+                  </div>
+                  <input 
+                    type="checkbox" 
+                    checked={emailAlertsEnabled} 
+                    onChange={(e) => setEmailAlertsEnabled(e.target.checked)} 
+                    className="w-4 h-4 text-[#1D5FF0] rounded cursor-pointer"
+                  />
+                </div>
               </div>
-              <span className="text-[10px] bg-rose-200/80 px-2 py-0.5 rounded-full">Reset</span>
-            </button>
-          </div>
 
-        </div>
-
-      </div>
-
-      {/* Footer Info */}
-      <div className="text-center pt-4 text-xs font-medium text-charcoal-400">
-        PaperTrail Document Management Platform • Enterprise Vault v1.0 • AES-256 Zero-Knowledge
-      </div>
+              <div className="flex justify-end pt-2">
+                <button
+                  onClick={() => setActiveModal(null)}
+                  className="px-5 py-2.5 rounded-xl bg-[#1D5FF0] text-white font-bold text-xs shadow-card hover:bg-[#0752D9] cursor-pointer"
+                >
+                  Save Preferences
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
     </div>
   );

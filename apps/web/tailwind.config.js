@@ -9,24 +9,33 @@ export default {
       colors: {
         canvas: '#EBECEF',
         surface: '#F7F7F7',
-        primary: {
-          DEFAULT: '#0861E8',
-          hover: '#0752c4',
-          light: '#2575fc',
-          muted: '#EBF2FF',
-          dark: '#0546aa'
+        // Official PaperTrail Design Tokens from Spec
+        pt: {
+          blue: '#1D5FF0',
+          blueSecondary: '#3B82F6',
+          blueDeep: '#0752D9',
+          bg: '#FFFFFF',
+          bgSecondary: '#F7F9FC',
+          textPrimary: '#0F172A',
+          textSecondary: '#64748B',
+          border: '#E2E8F0',
+          lightBlue: '#EAF1FF',
+          success: '#27A879',
+          warning: '#F5A623',
+          danger: '#F04452',
+          lavender: '#F0EAFE',
+          financeGreen: '#E8F6EF',
+          insuranceOrange: '#FFF2E6',
+          healthPink: '#FCECF3',
+          neutralGrey: '#F0F2F6',
         },
-        charcoal: {
-          900: '#14181F',
-          800: '#1F242D',
-          700: '#323945',
-          600: '#4B5565',
-          500: '#697586',
-          400: '#9AA4B2',
-          300: '#CDD5DF',
-          200: '#E3E8EF',
-          100: '#F8F9FA'
-        }
+        primary: {
+          DEFAULT: '#1D5FF0',
+          hover: '#0752D9',
+          light: '#3B82F6',
+          muted: '#EAF1FF',
+          dark: '#053EA8',
+        },
       },
       fontFamily: {
         sans: ['Plus Jakarta Sans', 'Inter', 'SF Pro Display', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
@@ -39,12 +48,12 @@ export default {
         '5xl': '48px',
       },
       boxShadow: {
-        'soft': '0 8px 30px rgba(0, 0, 0, 0.04)',
-        'card': '0 12px 36px -4px rgba(8, 97, 232, 0.28)',
-        'card-subtle': '0 10px 30px -4px rgba(0, 0, 0, 0.08)',
-        'nav': '0 10px 40px -6px rgba(0, 0, 0, 0.12)',
-        'float': '0 14px 44px -8px rgba(0, 0, 0, 0.16)',
-        'device': '0 25px 70px -15px rgba(0, 0, 0, 0.22), 0 0 0 1px rgba(0,0,0,0.06)'
+        'subtle': '0 2px 8px rgba(15, 23, 42, 0.04), 0 1px 2px rgba(15, 23, 42, 0.02)',
+        'card': '0 8px 24px -4px rgba(29, 95, 240, 0.22)',
+        'hero': '0 16px 40px -6px rgba(29, 95, 240, 0.32), 0 4px 12px rgba(0, 0, 0, 0.04)',
+        'nav': '0 12px 36px -4px rgba(15, 23, 42, 0.12)',
+        'sheet': '0 -10px 40px rgba(15, 23, 42, 0.16)',
+        'float': '0 10px 30px -4px rgba(29, 95, 240, 0.35)',
       }
     },
   },

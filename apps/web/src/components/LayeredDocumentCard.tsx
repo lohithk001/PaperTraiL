@@ -16,7 +16,14 @@ import { useDocumentContext } from '../context/DocumentContext';
 import { triggerConfetti } from './Confetti';
 
 export const LayeredDocumentCard: React.FC = () => {
-  const { documents, setSelectedDocument, markDocumentVerified } = useDocumentContext();
+  const { 
+    documents, 
+    setSelectedDocument, 
+    markDocumentVerified,
+    setActiveDocumentDetail,
+    setActiveTab,
+    setIsActionSheetOpen
+  } = useDocumentContext();
 
   // Find the primary hero document (College Marksheet or first priority document)
   const heroDoc = documents.find(d => d.title.includes('Marksheet') || d.id === 'doc-hero') || documents[0];
@@ -89,7 +96,10 @@ export const LayeredDocumentCard: React.FC = () => {
           }}
           whileHover={{ scale: 1.012 }}
           transition={{ duration: 0.2 }}
-          onClick={() => setSelectedDocument(heroDoc)}
+          onClick={() => {
+            setActiveDocumentDetail(heroDoc);
+            setActiveTab('document-detail');
+          }}
           className="relative w-full rounded-[32px] bg-gradient-to-br from-[#0861E8] via-[#095FE2] to-[#0448AF] p-6 sm:p-7 text-white shadow-[0_20px_50px_rgba(8,97,232,0.32)] border border-white/25 overflow-hidden cursor-pointer group"
         >
           {/* Subtle Ambient Glow Effect inside card */}
@@ -166,7 +176,8 @@ export const LayeredDocumentCard: React.FC = () => {
               whileTap={{ scale: 0.97 }}
               onClick={(e) => {
                 e.stopPropagation();
-                setSelectedDocument(heroDoc);
+                setActiveDocumentDetail(heroDoc);
+                setActiveTab('document-detail');
               }}
               className="px-5 py-3 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-md text-white font-bold text-sm flex items-center gap-2.5 border border-white/30 shadow-sm transition-all"
             >
@@ -179,15 +190,16 @@ export const LayeredDocumentCard: React.FC = () => {
             <motion.button
               whileHover={{ scale: 1.08, rotate: 6 }}
               whileTap={{ scale: 0.92 }}
-              onClick={handleQuickAction}
-              title="Edit or Verify Document"
+              onClick={(e) => {
+                e.stopPropagation();
+                setActiveDocumentDetail(heroDoc);
+                setSelectedDocument(heroDoc);
+                setIsActionSheetOpen(true);
+              }}
+              title="Document Options & Actions"
               className="w-12 h-12 rounded-full bg-white text-[#0861E8] shadow-lg shadow-black/15 flex items-center justify-center transition-all group-hover:shadow-xl"
             >
-              {isVerifiedAnim ? (
-                <Check className="w-5 h-5 stroke-[3] text-emerald-600" />
-              ) : (
-                <Edit3 className="w-5 h-5 stroke-[2.2] text-[#0861E8]" />
-              )}
+              <Edit3 className="w-5 h-5 stroke-[2.2] text-[#0861E8]" />
             </motion.button>
 
           </div>
