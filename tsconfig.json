@@ -1,24 +1,17 @@
 {
+  "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "target": "ES2020",
-    "useDefineForClassFields": true,
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
-    "module": "ESNext",
-    "skipLibCheck": true,
-
-    /* Bundler mode */
-    "moduleResolution": "bundler",
-    "allowImportingTsExtensions": false,
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmit": true,
-    "jsx": "react-jsx",
-
-    /* Linting */
-    "strict": true,
-    "noUnusedLocals": false,
-    "noUnusedParameters": false,
-    "noFallthroughCasesInSwitch": true
+    "noEmit": true
   },
-  "include": ["src"]
+  "files": [],
+  "references": [
+    { "path": "apps/web" },
+    { "path": "apps/api" },
+    { "path": "apps/worker" },
+    { "path": "packages/api-client" },
+    { "path": "packages/contracts" },
+    { "path": "packages/design-tokens" },
+    { "path": "packages/types" },
+    { "path": "packages/validators" }
+  ]
 }

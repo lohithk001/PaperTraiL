@@ -46,85 +46,53 @@ export const BentoHomeScreen: React.FC = () => {
     { id: 'Warranty', label: 'Warranty', icon: FileText },
   ];
 
-  // The 4 Signature Bento Cards matching exact pastel tones, typography, badges, and layout
-  const bentoCards = [
-    {
-      id: 'card-1',
-      tag: 'Education',
-      icon: GraduationCap,
-      rating: '4.9',
-      verified: true,
-      title: 'College Marksheet: 8th Sem Degree',
-      subtitle: 'Official VTU graduation transcript with certified distinction marks.',
-      meta: 'Expires in 30 days • Nov 30',
-      metaWarning: true,
-      bg: 'bg-[#FDE8E8]',
-      border: 'border-[#FBD6D6]',
-      tagBg: 'bg-white text-rose-800',
-      avatars: [
-        'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=80&q=80',
-        'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=80&q=80',
-      ],
-      docRef: documents.find(d => d.title.includes('Marksheet')) || documents[0],
-    },
-    {
-      id: 'card-2',
-      tag: 'Finance',
-      icon: CreditCard,
-      rating: '5.0',
-      verified: true,
-      title: 'Annual Income Tax Return & Form 16',
-      subtitle: 'Certified financial year audit statement & zero-deduction certificate.',
-      meta: 'Verified Jan 2026 • 3.6 MB',
-      metaWarning: false,
-      bg: 'bg-[#FFF0DE]',
-      border: 'border-[#FCE0C1]',
-      tagBg: 'bg-white text-amber-900',
-      avatars: [
-        'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=80&q=80',
-        'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=80&q=80',
-      ],
-      docRef: documents.find(d => d.category === 'Finance') || documents[1],
-    },
-    {
-      id: 'card-3',
-      tag: 'Identity',
-      icon: FileCheck,
-      rating: '4.9',
-      verified: true,
-      title: 'International Passport & Biometric Travel ID',
-      subtitle: '36-page national travel passport with embedded RFID biometric chip.',
-      meta: 'Valid until 2034 • Encrypted',
-      metaWarning: false,
-      bg: 'bg-[#EDE8FF]',
-      border: 'border-[#DDD5F7]',
-      tagBg: 'bg-white text-purple-900',
-      avatars: [
-        'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=80&q=80',
-        'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=80&q=80',
-      ],
-      docRef: documents.find(d => d.category === 'Identity') || documents[2],
-    },
-    {
-      id: 'card-4',
-      tag: 'Insurance',
-      icon: Shield,
-      rating: '5.0',
-      badge: 'Top Priority',
-      verified: true,
-      title: 'Vehicle Comprehensive Motor Policy',
-      subtitle: 'Zero-depreciation bumper-to-bumper car insurance cover with roadside assistance.',
-      meta: 'Renews in 12 days • Nov 15',
-      metaWarning: true,
-      bg: 'bg-[#DEF5E5]',
-      border: 'border-[#C4EDCE]',
-      tagBg: 'bg-white text-emerald-900',
-      avatars: [
-        'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=80&q=80',
-      ],
-      docRef: documents.find(d => d.category === 'Insurance') || documents[3],
-    },
-  ];
+  const getCategoryStyles = (category: string) => {
+    switch (category) {
+      case 'Education':
+        return {
+          bg: 'bg-[#FDE8E8]',
+          border: 'border-[#FBD6D6]',
+          tagBg: 'bg-white text-rose-800',
+          icon: GraduationCap,
+        };
+      case 'Finance':
+        return {
+          bg: 'bg-[#FFF0DE]',
+          border: 'border-[#FCE0C1]',
+          tagBg: 'bg-white text-amber-900',
+          icon: CreditCard,
+        };
+      case 'Identity':
+        return {
+          bg: 'bg-[#EDE8FF]',
+          border: 'border-[#DDD5F7]',
+          tagBg: 'bg-white text-purple-900',
+          icon: FileCheck,
+        };
+      case 'Insurance':
+      case 'Vehicle':
+        return {
+          bg: 'bg-[#DEF5E5]',
+          border: 'border-[#C4EDCE]',
+          tagBg: 'bg-white text-emerald-900',
+          icon: Shield,
+        };
+      case 'Medical':
+        return {
+          bg: 'bg-[#FFE8EC]',
+          border: 'border-[#FFD5DC]',
+          tagBg: 'bg-white text-rose-900',
+          icon: Heart,
+        };
+      default:
+        return {
+          bg: 'bg-[#EAF2FF]',
+          border: 'border-[#D5E4FF]',
+          tagBg: 'bg-white text-blue-900',
+          icon: FileText,
+        };
+    }
+  };
 
   const handleOpenDoc = (doc?: DocumentItem) => {
     if (!doc) return;
@@ -135,6 +103,9 @@ export const BentoHomeScreen: React.FC = () => {
   const filteredDocs = activeCategory === 'All' 
     ? documents 
     : documents.filter(d => d.category.toLowerCase().includes(activeCategory.toLowerCase()) || activeCategory.toLowerCase().includes(d.category.toLowerCase()));
+
+  // Active Priority / Focal documents for the 2x2 Bento grid (up to 4 items)
+  const primaryCards = filteredDocs.slice(0, 4);
 
   return (
     <div className="flex-1 flex flex-col gap-5 select-none pb-8">
@@ -185,11 +156,11 @@ export const BentoHomeScreen: React.FC = () => {
         })}
       </div>
 
-      {/* 3. Section Title: "Most popular" */}
+      {/* 3. Section Title: Priority Documents & Action Required */}
       <div>
         <div className="flex items-center justify-between mb-3.5">
           <span className="text-xs font-bold text-[#6B7280]">
-            Most popular
+            Priority Documents & Expiry Status
           </span>
           <button
             onClick={() => setActiveTab('documents')}
@@ -200,88 +171,101 @@ export const BentoHomeScreen: React.FC = () => {
           </button>
         </div>
 
-        {/* 4. The 2x2 Bento Cards Grid (Exact matching the 4 pastel cards) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {bentoCards.map((card, idx) => {
-            const Icon = card.icon;
+        {/* 4. The 2x2 Bento Cards Grid dynamically driven by real vault documents */}
+        {primaryCards.length === 0 ? (
+          <div className="p-8 bg-white rounded-3xl border border-[#EBE4DA] text-center">
+            <p className="text-sm font-bold text-[#111827]">No documents found in {activeCategory}</p>
+            <p className="text-xs text-[#78716C] mt-1">Upload a document to securely store and protect it in this vault category.</p>
+            <button
+              onClick={() => setIsUploadModalOpen(true)}
+              className="mt-4 px-5 py-2.5 rounded-full bg-[#111827] text-white text-xs font-bold cursor-pointer hover:bg-black transition-all"
+            >
+              Upload Document
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {primaryCards.map((doc, idx) => {
+              const styles = getCategoryStyles(doc.category);
+              const Icon = styles.icon;
 
-            return (
-              <motion.div
-                key={card.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.04, duration: 0.25 }}
-                whileHover={{ y: -3, scale: 1.006 }}
-                whileTap={{ scale: 0.99 }}
-                onClick={() => handleOpenDoc(card.docRef)}
-                className={`${card.bg} rounded-[28px] p-5 sm:p-6 border ${card.border} hover:shadow-md transition-all cursor-pointer flex flex-col justify-between min-h-[195px] group relative`}
-              >
-                {/* Top Row: Category Pill & Star Rating / Badge */}
-                <div className="flex items-center justify-between gap-2">
-                  <div className={`px-3 py-1 rounded-full text-xs font-bold shadow-2xs flex items-center gap-1.5 ${card.tagBg}`}>
-                    <Icon className="w-3.5 h-3.5" />
-                    <span>{card.tag}</span>
-                  </div>
+              return (
+                <motion.div
+                  key={doc.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.04, duration: 0.25 }}
+                  whileHover={{ y: -3, scale: 1.006 }}
+                  whileTap={{ scale: 0.99 }}
+                  onClick={() => handleOpenDoc(doc)}
+                  className={`${styles.bg} rounded-[28px] p-5 sm:p-6 border ${styles.border} hover:shadow-md transition-all cursor-pointer flex flex-col justify-between min-h-[195px] group relative`}
+                >
+                  {/* Top Row: Category Pill & Status Badge */}
+                  <div className="flex items-center justify-between gap-2">
+                    <div className={`px-3 py-1 rounded-full text-xs font-bold shadow-2xs flex items-center gap-1.5 ${styles.tagBg}`}>
+                      <Icon className="w-3.5 h-3.5" />
+                      <span>{doc.category}</span>
+                    </div>
 
-                  <div className="flex items-center gap-2">
-                    {card.badge && (
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-white text-emerald-800 shadow-2xs border border-emerald-200">
-                        {card.badge}
-                      </span>
-                    )}
-                    <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/70 text-xs font-bold text-[#111827] shadow-2xs">
-                      <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                      <span>{card.rating}</span>
+                    <div className="flex items-center gap-1.5">
+                      {doc.isExpiringSoon ? (
+                        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-white text-rose-700 shadow-2xs border border-rose-200 flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
+                          <span>Expires in {doc.daysLeft}d</span>
+                        </span>
+                      ) : (
+                        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-white text-emerald-800 shadow-2xs border border-emerald-200 flex items-center gap-1">
+                          <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                          <span>Verified</span>
+                        </span>
+                      )}
                     </div>
                   </div>
-                </div>
 
-                {/* Middle: Big Title & Subtitle */}
-                <div className="my-2.5">
-                  <h3 className="text-base sm:text-lg font-bold text-[#111827] tracking-tight leading-snug group-hover:text-black transition-colors line-clamp-2">
-                    {card.title}
-                  </h3>
-                  <p className="text-xs text-[#4B5563] mt-1 line-clamp-1">
-                    {card.subtitle}
-                  </p>
-                </div>
-
-                {/* Bottom Row: Metadata & Overlapping Avatars */}
-                <div className="flex items-center justify-between pt-2">
-                  <div className="flex items-center gap-1.5 text-xs font-semibold text-[#4B5563]">
-                    {card.metaWarning && (
-                      <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
-                    )}
-                    <span>{card.meta}</span>
+                  {/* Middle: Big Title & Subtitle */}
+                  <div className="my-2.5">
+                    <h3 className="text-base sm:text-lg font-bold text-[#111827] tracking-tight leading-snug group-hover:text-black transition-colors line-clamp-2">
+                      {doc.title}
+                    </h3>
+                    <p className="text-xs text-[#4B5563] mt-1 line-clamp-1">
+                      {doc.issuer || doc.policyNumber || 'Encrypted Vault Record'}
+                    </p>
                   </div>
 
-                  {/* Overlapping Avatars matching reference */}
-                  <div className="flex items-center -space-x-2">
-                    {card.avatars.map((img, aIdx) => (
-                      <img
-                        key={aIdx}
-                        src={img}
-                        alt="Author"
-                        className="w-7 h-7 rounded-full ring-2 ring-white object-cover shadow-2xs"
-                      />
-                    ))}
+                  {/* Bottom Row: Expiry / Issue Date & File Format/Size */}
+                  <div className="flex items-center justify-between pt-2">
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-[#4B5563]">
+                      {doc.isExpiringSoon && (
+                        <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
+                      )}
+                      <span>
+                        {doc.expiryDate ? `Expires ${doc.expiryDate}` : `Added ${doc.issueDate}`}
+                      </span>
+                    </div>
+
+                    {/* Clean format and file size pill */}
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/80 border border-black/5 text-[11px] font-bold text-[#111827] shadow-2xs">
+                      <span className="uppercase">{doc.fileType}</span>
+                      <span className="text-[#A8A29E]">•</span>
+                      <span>{doc.fileSize}</span>
+                    </div>
                   </div>
-                </div>
-              </motion.div>
-            );
-          })}
-        </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
-      {/* 5. Featured Documents Section (matching "Featured course") */}
+      {/* 5. All Vault Records Section */}
       <div className="pt-2">
         <div className="flex items-center justify-between mb-3.5">
           <span className="text-xs font-bold text-[#6B7280]">
-            Featured vault documents
+            All Vault Records ({filteredDocs.length})
           </span>
           <button
             onClick={() => setIsUploadModalOpen(true)}
-            className="text-xs font-bold text-[#1D5FF0] hover:underline flex items-center gap-1 cursor-pointer"
+            className="text-xs font-bold text-[#111827] hover:underline flex items-center gap-1 cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
             <span>Upload New</span>

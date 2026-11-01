@@ -28,23 +28,9 @@ export const BentoLayout: React.FC<{ children: React.ReactNode }> = ({ children 
   return (
     <div className="min-h-screen relative flex items-center justify-center p-0 md:p-4 lg:p-7 font-sans antialiased text-[#111827] selection:bg-[#111827] selection:text-white overflow-hidden bg-[#ECE7DE]">
       
-      {/* Ambient Multi-Layered Blurred Background Glows */}
+      {/* Subtle Premium Canvas Depth (Clean architectural backdrop without neon AI-slop blobs) */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none select-none hidden md:block">
-        {/* Soft pastel blue-indigo glow orb */}
-        <div 
-          className="absolute -top-[15%] -left-[10%] w-[580px] h-[580px] rounded-full bg-gradient-to-br from-blue-400/40 via-indigo-300/35 to-transparent blur-[130px] animate-pulse" 
-          style={{ animationDuration: '9s' }} 
-        />
-        {/* Soft purple-rose glow orb */}
-        <div 
-          className="absolute top-[30%] -right-[10%] w-[640px] h-[640px] rounded-full bg-gradient-to-br from-purple-400/35 via-pink-300/30 to-rose-200/25 blur-[150px]" 
-        />
-        {/* Soft warm amber-peach glow orb */}
-        <div 
-          className="absolute -bottom-[15%] left-[25%] w-[650px] h-[650px] rounded-full bg-gradient-to-tr from-amber-300/30 via-orange-200/25 to-sky-200/25 blur-[140px]" 
-        />
-        {/* Frosted glass backdrop blur layer */}
-        <div className="absolute inset-0 bg-[#ECE7DE]/50 backdrop-blur-3xl" />
+        <div className="absolute inset-0 bg-radial-[at_50%_40%] from-[#FAF7F2]/60 via-[#ECE7DE] to-[#E3DDD1] opacity-90" />
       </div>
 
       {/* Application Container: Full-bleed on mobile, Floating Framed Card on desktop */}

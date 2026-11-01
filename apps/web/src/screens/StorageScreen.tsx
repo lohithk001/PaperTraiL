@@ -23,18 +23,62 @@ export const StorageScreen: React.FC = () => {
   const verifiedCount = documents.filter(d => d.isVerified).length;
   const expiringCount = documents.filter(d => d.isExpiringSoon).length;
 
-  const storageCategories = [
-    { name: 'Identity & Legal', percent: 42, size: '6.2 MB', count: 2, color: '#0861E8' },
-    { name: 'Vehicle & Policies', percent: 28, size: '4.1 MB', count: 2, color: '#10B981' },
-    { name: 'Financial & Tax', percent: 18, size: '2.7 MB', count: 1, color: '#8B5CF6' },
-    { name: 'Medical & Other', percent: 12, size: '1.8 MB', count: 1, color: '#F59E0B' },
-  ];
+  // Real, Dynamic Storage Calculation derived from vault documents
+  const { totalUsedMb, storageCategories, percentUsed, remainingQuotaMb } = React.useMemo(() => {
+    let totalMb = 0;
+    const catMap: Record<string, { size: number; count: number; color: string }> = {
+      'Identity': { size: 0, count: 0, color: '#1D5FF0' },
+      'Insurance': { size: 0, count: 0, color: '#10B981' },
+      'Finance': { size: 0, count: 0, color: '#F59E0B' },
+      'Education': { size: 0, count: 0, color: '#8B5CF6' },
+      'Medical': { size: 0, count: 0, color: '#EC4899' },
+      'Warranty': { size: 0, count: 0, color: '#6366F1' },
+    };
+
+    documents.forEach((d) => {
+      const match = d.fileSize.match(/([\d.]+)\s*(MB|KB)/i);
+      let mb = 0.5;
+      if (match) {
+        const val = parseFloat(match[1]);
+        const unit = match[2].toUpperCase();
+        mb = unit === 'MB' ? val : val / 1024;
+      }
+      totalMb += mb;
+
+      const catKey = catMap[d.category] ? d.category : 'Identity';
+      catMap[catKey].size += mb;
+      catMap[catKey].count += 1;
+    });
+
+    const quotaMb = 500;
+    const pct = Math.min(100, Math.max(1, Math.round((totalMb / quotaMb) * 100)));
+    const remaining = Math.max(0, quotaMb - totalMb);
+
+    const categoriesList = Object.entries(catMap)
+      .filter(([_, data]) => data.count > 0)
+      .map(([name, data]) => ({
+        name,
+        count: data.count,
+        size: `${data.size.toFixed(1)} MB`,
+        percent: totalMb > 0 ? Math.round((data.size / totalMb) * 100) : 0,
+        color: data.color,
+      }));
+
+    return {
+      totalUsedMb: totalMb.toFixed(1),
+      storageCategories: categoriesList.length > 0 ? categoriesList : [
+        { name: 'All Documents', count: documents.length, size: `${totalMb.toFixed(1)} MB`, percent: 100, color: '#1D5FF0' }
+      ],
+      percentUsed: pct,
+      remainingQuotaMb: remaining.toFixed(1),
+    };
+  }, [documents]);
 
   const auditEvents = [
-    { id: 1, event: 'Document Verified', doc: 'Vehicle Insurance Policy', time: '10 mins ago', status: 'Success' },
-    { id: 2, event: 'R2 Cloud Sync', doc: 'International Passport', time: '1 hour ago', status: 'Encrypted' },
+    { id: 1, event: 'Document Verified', doc: documents[0]?.title || 'Vault Record', time: '10 mins ago', status: 'Success' },
+    { id: 2, event: 'R2 Cloud Sync', doc: documents[1]?.title || 'Vault Record', time: '1 hour ago', status: 'Encrypted' },
     { id: 3, event: 'Integrity Check Passed', doc: 'All Vault Records', time: '6 hours ago', status: 'Valid' },
-    { id: 4, event: 'Audit Log Generated', doc: 'Session Log', time: 'Yesterday', status: 'Logged' },
+    { id: 4, event: 'Audit Log Generated', doc: 'Session Log', time: 'Today', status: 'Logged' },
   ];
 
   return (
@@ -82,15 +126,15 @@ export const StorageScreen: React.FC = () => {
           </div>
           <p className="text-xs font-bold uppercase tracking-wider text-charcoal-400">Storage Used</p>
           <div className="flex items-baseline gap-2 mt-1">
-            <span className="text-3xl font-extrabold text-charcoal-900">{userProfile.storageUsed}</span>
-            <span className="text-sm font-semibold text-charcoal-500">of {userProfile.storageTotal} (3%)</span>
+            <span className="text-3xl font-extrabold text-charcoal-900">{totalUsedMb} MB</span>
+            <span className="text-sm font-semibold text-charcoal-500">of 500 MB ({percentUsed}%)</span>
           </div>
           {/* Progress bar */}
           <div className="w-full h-2.5 bg-neutral-100 rounded-full mt-4 overflow-hidden">
-            <div className="h-full bg-primary rounded-full" style={{ width: '3%' }}></div>
+            <div className="h-full bg-primary rounded-full" style={{ width: `${percentUsed}%` }}></div>
           </div>
           <p className="text-xs font-medium text-charcoal-500 mt-2">
-            9.98 GB remaining in your personal vault.
+            {remainingQuotaMb} MB remaining in your personal vault.
           </p>
         </div>
 

@@ -1,17 +1,15 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import React, { useMemo } from 'react';
 import { 
   Bell, 
   Settings, 
   ChevronRight, 
-  ChevronDown, 
   ShieldCheck, 
   GraduationCap, 
   Shield, 
-  Star,
-  Sparkles,
+  Lock,
   FileText,
-  Lock
+  CreditCard,
+  Heart
 } from 'lucide-react';
 import { useDocumentContext } from '../../context/DocumentContext';
 
@@ -25,25 +23,48 @@ export const BentoRightRail: React.FC = () => {
     setActiveDocumentDetail 
   } = useDocumentContext();
 
-  const [activeChartMonth, setActiveChartMonth] = useState('Dec');
+  // Dynamic real storage calculation from actual vault documents
+  const storageMetrics = useMemo(() => {
+    let totalMb = 0;
+    const categoryCounts: Record<string, number> = {};
 
-  const chartData = [
-    { month: 'Jan', h1: 18, h2: 12, h3: 8, h4: 10 },
-    { month: 'Feb', h1: 22, h2: 15, h3: 10, h4: 6 },
-    { month: 'Aug', h1: 16, h2: 10, h3: 14, h4: 12 },
-    { month: 'Sep', h1: 24, h2: 18, h3: 12, h4: 14 },
-    { month: 'Oct', h1: 14, h2: 8, h3: 6, h4: 8 },
-    { month: 'Nov', h1: 20, h2: 16, h3: 12, h4: 10 },
-    { month: 'Dec', h1: 28, h2: 20, h3: 16, h4: 14, active: true },
-  ];
+    documents.forEach((d) => {
+      // Calculate size
+      const match = d.fileSize.match(/([\d.]+)\s*(MB|KB)/i);
+      if (match) {
+        const val = parseFloat(match[1]);
+        const unit = match[2].toUpperCase();
+        totalMb += unit === 'MB' ? val : val / 1024;
+      }
 
-  const handleOpenDoc = (titleSubstring: string) => {
-    const doc = documents.find(d => d.title.toLowerCase().includes(titleSubstring.toLowerCase())) || documents[0];
+      // Tally category
+      categoryCounts[d.category] = (categoryCounts[d.category] || 0) + 1;
+    });
+
+    const usedFormatted = totalMb >= 1024 ? `${(totalMb / 1024).toFixed(2)} GB` : `${totalMb.toFixed(1)} MB`;
+    const quotaMb = 500; // 500 MB Free Tier Vault Quota
+    const percentUsed = Math.min(100, Math.max(1, Math.round((totalMb / quotaMb) * 100)));
+
+    return {
+      used: usedFormatted,
+      quota: `${quotaMb} MB`,
+      percent: percentUsed,
+      categoryCounts,
+    };
+  }, [documents]);
+
+  const handleOpenDoc = (idOrTitle: string) => {
+    const doc = documents.find(d => d.id === idOrTitle || d.title.toLowerCase().includes(idOrTitle.toLowerCase())) || documents[0];
     if (doc) {
       setActiveDocumentDetail(doc);
       setActiveTab('document-detail');
     }
   };
+
+  const pinnedDocs = useMemo(() => {
+    const favorites = documents.filter(d => d.isFavorite || d.isPriority);
+    return favorites.length > 0 ? favorites.slice(0, 2) : documents.slice(0, 2);
+  }, [documents]);
 
   return (
     <aside className="w-[310px] bg-[#F2ECE2] rounded-[30px] p-5 flex flex-col gap-4.5 border border-[#E8DFD3] shrink-0 select-none overflow-y-auto no-scrollbar">
@@ -70,10 +91,10 @@ export const BentoRightRail: React.FC = () => {
         </button>
       </div>
 
-      {/* 2. User Profile Summary matching reference */}
+      {/* 2. User Profile Summary */}
       <div className="flex flex-col items-center text-center">
         
-        {/* Profile Avatar with colorful ring halo matching reference */}
+        {/* Profile Avatar with colorful ring halo */}
         <div className="w-20 h-20 rounded-full p-1 bg-gradient-to-tr from-purple-500 via-pink-400 to-indigo-500 shadow-md">
           <div className="w-full h-full rounded-full overflow-hidden bg-white ring-2 ring-white">
             <img 
@@ -92,7 +113,7 @@ export const BentoRightRail: React.FC = () => {
           Personal Document Vault
         </p>
 
-        {/* Vault Documents Pill Button with overlapping avatars matching reference */}
+        {/* Vault Documents Button */}
         <button
           onClick={() => setActiveTab('documents')}
           className="mt-3 w-full py-2.5 px-3.5 bg-white rounded-2xl flex items-center justify-between shadow-2xs border border-[#EBE4DA] hover:border-slate-300 transition-all cursor-pointer group"
@@ -107,82 +128,54 @@ export const BentoRightRail: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-1.5">
-            {/* Overlapping small avatar chips matching reference */}
-            <div className="flex items-center -space-x-1.5">
-              <img 
-                src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=60&q=80" 
-                className="w-5 h-5 rounded-full ring-2 ring-white object-cover" 
-                alt="Doc"
-              />
-              <img 
-                src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=60&q=80" 
-                className="w-5 h-5 rounded-full ring-2 ring-white object-cover" 
-                alt="Doc"
-              />
-              <img 
-                src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=60&q=80" 
-                className="w-5 h-5 rounded-full ring-2 ring-white object-cover" 
-                alt="Doc"
-              />
-            </div>
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#F5EFE6] text-[#57534E]">
+              AES-256
+            </span>
             <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-700 transition-colors" />
           </div>
         </button>
 
       </div>
 
-      {/* 3. Activity Card matching reference 3.5h + stacked bar chart */}
+      {/* 3. Storage Allocation & Category Distribution (Derived from real documents) */}
       <div className="bg-white rounded-[24px] p-4 shadow-2xs border border-[#EBE4DA] space-y-3">
         
         {/* Header */}
         <div className="flex items-center justify-between text-xs font-semibold">
-          <span className="text-[#6B7280]">Activity</span>
-          <div className="flex items-center gap-1 text-[11px] font-bold text-[#111827] bg-[#F5EFE6] px-2 py-0.5 rounded-lg">
-            <span>Year</span>
-            <ChevronDown className="w-3 h-3" />
-          </div>
+          <span className="text-[#6B7280]">Vault Storage</span>
+          <span className="text-[11px] font-bold text-[#111827] bg-[#F5EFE6] px-2 py-0.5 rounded-lg">
+            {storageMetrics.percent}% used
+          </span>
         </div>
 
-        {/* 3.5 GB Metric & "Great result!" Pill */}
+        {/* Dynamic Metric */}
         <div className="flex items-center justify-between">
           <span className="text-2xl font-black text-[#111827] tracking-tight">
-            3.5 GB
+            {storageMetrics.used}
           </span>
 
-          <div className="px-2.5 py-1 rounded-full bg-[#FFF6E6] text-[#B45309] text-[11px] font-bold flex items-center gap-1">
-            <span>👍 Storage Safe!</span>
+          <div className="px-2.5 py-1 rounded-full bg-[#ECFDF5] text-[#065F46] text-[11px] font-bold flex items-center gap-1 border border-emerald-200">
+            <ShieldCheck className="w-3 h-3 text-emerald-600" />
+            <span>Storage Encrypted</span>
           </div>
         </div>
 
-        {/* Multi-Colored Stacked Bar Chart */}
-        <div className="pt-2 flex items-end justify-between gap-1.5 h-26">
-          {chartData.map((bar) => {
-            const isSelected = activeChartMonth === bar.month;
+        {/* Real Progress Bar */}
+        <div className="w-full bg-[#FAF7F2] h-2 rounded-full overflow-hidden border border-[#EBE4DA]">
+          <div 
+            className="bg-[#111827] h-full rounded-full transition-all duration-500"
+            style={{ width: `${storageMetrics.percent}%` }}
+          />
+        </div>
 
+        {/* Real Category Distribution */}
+        <div className="pt-1 grid grid-cols-2 gap-2 text-[11px]">
+          {['Identity', 'Finance', 'Insurance', 'Education'].map((cat) => {
+            const count = storageMetrics.categoryCounts[cat] || 0;
             return (
-              <div 
-                key={bar.month}
-                onClick={() => setActiveChartMonth(bar.month)}
-                className={`flex-1 flex flex-col items-center justify-end h-full cursor-pointer transition-all ${
-                  isSelected ? 'p-1 rounded-xl bg-white border-2 border-[#111827] shadow-xs' : 'hover:opacity-85'
-                }`}
-              >
-                {/* Stacked Colored Segments */}
-                <div className="w-full flex flex-col justify-end gap-0.5 rounded-t-md overflow-hidden">
-                  <div style={{ height: `${bar.h4}px` }} className="w-full bg-[#FFE5A3] rounded-xs"></div>
-                  <div style={{ height: `${bar.h3}px` }} className="w-full bg-[#C5EFE0] rounded-xs"></div>
-                  <div style={{ height: `${bar.h2}px` }} className="w-full bg-[#FFD1D5] rounded-xs"></div>
-                  <div style={{ height: `${bar.h1}px` }} className="w-full bg-[#D6D0F8] rounded-xs"></div>
-                </div>
-
-                {/* Month label */}
-                <span className={`text-[10px] mt-1.5 leading-none transition-all ${
-                  isSelected 
-                    ? 'px-1.5 py-0.5 rounded-md bg-[#111827] text-white font-bold' 
-                    : 'text-[#9CA3AF] font-semibold'
-                }`}>
-                  {bar.month}
-                </span>
+              <div key={cat} className="flex items-center justify-between p-1.5 rounded-lg bg-[#FAF7F2] border border-[#EBE4DA]/70">
+                <span className="text-[#57534E] font-medium truncate">{cat}</span>
+                <span className="font-bold text-[#111827] ml-1">{count}</span>
               </div>
             );
           })}
@@ -190,93 +183,55 @@ export const BentoRightRail: React.FC = () => {
 
       </div>
 
-      {/* 4. "My vault" Section (Matching reference stacked pastel cards) */}
+      {/* 4. Pinned in Vault (Derived dynamically from real documents) */}
       <div className="space-y-2.5">
         
         <div className="flex items-center justify-between text-xs font-bold text-[#111827]">
           <span>Pinned in vault</span>
           <button 
             onClick={() => setActiveTab('documents')}
-            className="text-[11px] text-[#78716C] hover:text-[#111827]"
+            className="text-[11px] text-[#78716C] hover:text-[#111827] cursor-pointer"
           >
             See all
           </button>
         </div>
 
-        {/* Stacked Pastel Cards */}
+        {/* Stacked Cards */}
         <div className="space-y-2.5">
-          
-          {/* Card 1: Rose Pastel */}
-          <div 
-            onClick={() => handleOpenDoc('marksheet')}
-            className="bg-[#FDE8E8] rounded-[22px] p-3.5 border border-[#FBD6D6] hover:shadow-xs transition-all cursor-pointer group"
-          >
-            <div className="flex items-center justify-between mb-2">
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-white text-rose-800 flex items-center gap-1 shadow-2xs">
-                <GraduationCap className="w-3 h-3 stroke-[2.2]" />
-                <span>Education</span>
-              </span>
+          {pinnedDocs.map((doc, pIdx) => {
+            const isFirst = pIdx === 0;
+            const bgClass = isFirst ? 'bg-[#FDE8E8] border-[#FBD6D6]' : 'bg-[#DEF5E5] border-[#C4EDCE]';
+            const tagColor = isFirst ? 'text-rose-800' : 'text-emerald-800';
 
-              <span className="flex items-center gap-1 text-[10px] font-bold text-[#111827] bg-white px-2 py-0.5 rounded-full shadow-2xs">
-                <Star className="w-2.5 h-2.5 text-amber-500 fill-amber-400" />
-                <span>4.9</span>
-              </span>
-            </div>
+            return (
+              <div 
+                key={doc.id}
+                onClick={() => handleOpenDoc(doc.id)}
+                className={`${bgClass} rounded-[22px] p-3.5 border hover:shadow-xs transition-all cursor-pointer group`}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold bg-white ${tagColor} flex items-center gap-1 shadow-2xs`}>
+                    <Lock className="w-3 h-3 stroke-[2.2]" />
+                    <span>{doc.category}</span>
+                  </span>
 
-            <h4 className="text-xs font-bold text-[#111827] group-hover:text-black transition-colors leading-snug line-clamp-1">
-              College Marksheet (VTU Degree)
-            </h4>
+                  <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-800 bg-white px-2 py-0.5 rounded-full shadow-2xs border border-emerald-200">
+                    <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                    <span>Verified</span>
+                  </span>
+                </div>
 
-            <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-black/5 text-[10px] text-[#6B7280]">
-              <span>Verified • 2.4 MB</span>
-              <div className="flex items-center -space-x-1.5">
-                <img 
-                  src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=60&q=80" 
-                  className="w-4 h-4 rounded-full ring-1 ring-white object-cover" 
-                  alt="Issuer"
-                />
-                <img 
-                  src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=60&q=80" 
-                  className="w-4 h-4 rounded-full ring-1 ring-white object-cover" 
-                  alt="Issuer"
-                />
+                <h4 className="text-xs font-bold text-[#111827] group-hover:text-black transition-colors leading-snug line-clamp-1">
+                  {doc.title}
+                </h4>
+
+                <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-black/5 text-[10px] text-[#6B7280]">
+                  <span>{doc.expiryDate ? `Expires ${doc.expiryDate}` : `Added ${doc.issueDate}`}</span>
+                  <span className="font-semibold text-[#111827] uppercase">{doc.fileType} • {doc.fileSize}</span>
+                </div>
               </div>
-            </div>
-          </div>
-
-          {/* Card 2: Apricot Pastel */}
-          <div 
-            onClick={() => handleOpenDoc('insurance')}
-            className="bg-[#FFF0DE] rounded-[22px] p-3.5 border border-[#FCE0C1] hover:shadow-xs transition-all cursor-pointer group"
-          >
-            <div className="flex items-center justify-between mb-2">
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-white text-amber-900 flex items-center gap-1 shadow-2xs">
-                <Shield className="w-3 h-3 stroke-[2.2]" />
-                <span>Insurance</span>
-              </span>
-
-              <span className="flex items-center gap-1 text-[10px] font-bold text-[#111827] bg-white px-2 py-0.5 rounded-full shadow-2xs">
-                <Star className="w-2.5 h-2.5 text-amber-500 fill-amber-400" />
-                <span>5.0</span>
-              </span>
-            </div>
-
-            <h4 className="text-xs font-bold text-[#111827] group-hover:text-black transition-colors leading-snug line-clamp-1">
-              Vehicle Comprehensive Motor Policy
-            </h4>
-
-            <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-black/5 text-[10px] text-[#6B7280]">
-              <span>Renews Nov 15 • 1.8 MB</span>
-              <div className="flex items-center -space-x-1.5">
-                <img 
-                  src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=60&q=80" 
-                  className="w-4 h-4 rounded-full ring-1 ring-white object-cover" 
-                  alt="Issuer"
-                />
-              </div>
-            </div>
-          </div>
-
+            );
+          })}
         </div>
 
       </div>

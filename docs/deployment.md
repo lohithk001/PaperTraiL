@@ -11,7 +11,7 @@ This guide covers deployment instructions for all three PaperTrail applications 
 3. **Authentication**: [Clerk](https://clerk.com/)
 4. **Backend Hosting**: [Railway](https://railway.app/), Render, or AWS ECS
 5. **Web Hosting**: [Vercel](https://vercel.com/) or Cloudflare Pages
-6. **Mobile Builds**: [Expo Application Services (EAS)](https://expo.dev/eas)
+6. **Mobile Builds**: [Capacitor](https://capacitorjs.com/) & Android Studio / Gradle
 7. **Email Delivery**: [Resend](https://resend.com/)
 
 ---
@@ -27,8 +27,7 @@ This guide covers deployment instructions for all three PaperTrail applications 
   {
     "AllowedOrigins": [
       "https://papertrail.app",
-      "http://localhost:5173",
-      "http://localhost:8081"
+      "http://localhost:5173"
     ],
     "AllowedMethods": ["GET", "PUT", "HEAD"],
     "AllowedHeaders": ["Content-Type", "Content-Length", "Authorization"],
@@ -85,32 +84,34 @@ Deploy the React SPA to Vercel or Cloudflare Pages:
 
 ---
 
-## 6. Mobile Application Builds (`apps/mobile`)
+## 6. Android Mobile Application Builds (`apps/web/android`)
 
-The mobile application is built using **Expo Application Services (EAS)**:
+PaperTrail packages natively for Android via **Capacitor**:
 
 ### Prerequisites
-Install EAS CLI globally and login:
+- Android Studio Ladybug or later with Android SDK Platform 35
+- Java 21 JDK configured (`JAVA_HOME`)
+
+### Sync Web Assets & Plugins
+Build the web bundle and sync assets to the native Android container:
 ```bash
-npm install -g eas-cli
-eas login
+cd apps/web
+pnpm build
+npx cap sync android
 ```
 
-### Android Standalone APK (Preview Profile)
-Generates an installable `.apk` file for testing on physical Android devices:
+### Build Android Standalone APK (Debug / Testing)
 ```bash
-cd apps/mobile
-eas build --platform android --profile preview
+cd apps/web/android
+./gradlew assembleDebug
 ```
+The installable APK will be generated at:
+`apps/web/android/app/build/outputs/apk/debug/app-debug.apk`
 
-### Android App Bundle (Production AAB for Google Play Store)
-Generates an optimized `.aab` for Play Store Console submission:
+### Build Production Android App Bundle (.aab for Google Play Store)
 ```bash
-eas build --platform android --profile production
+cd apps/web/android
+./gradlew bundleRelease
 ```
-
-### iOS Production Build
-Generates an archive for Apple TestFlight or App Store:
-```bash
-eas build --platform ios --profile production
-```
+The production bundle will be generated at:
+`apps/web/android/app/build/outputs/bundle/release/app-release.aab`

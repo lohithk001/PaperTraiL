@@ -2,7 +2,7 @@
   "name": "papertrail-monorepo",
   "private": true,
   "version": "1.0.0",
-  "description": "PaperTrail — Multi-Platform Personal Document Vault (React Web, Expo Mobile, NestJS Backend)",
+  "description": "PaperTrail — Multi-Platform Personal Document Vault (React Web & Android Capacitor, NestJS Backend)",
   "packageManager": "pnpm@12.16.1",
   "scripts": {
     "build": "turbo run build",
@@ -11,7 +11,7 @@
     "test": "turbo run test",
     "dev:web": "pnpm --filter @papertrail/web dev",
     "dev:api": "pnpm --filter @papertrail/api start:dev",
-    "dev:mobile": "pnpm --filter @papertrail/mobile start",
+    "dev:android": "pnpm --filter @papertrail/web cap:android",
     "dev:worker": "pnpm --filter @papertrail/worker dev",
     "db:generate": "pnpm --filter @papertrail/api prisma:generate",
     "db:push": "pnpm --filter @papertrail/api prisma:push"

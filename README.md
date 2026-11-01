@@ -4,10 +4,9 @@
 
 PaperTrail is an enterprise-grade personal document management ecosystem architected as an independently maintainable multi-platform monorepo:
 
-1. **PaperTrail Web (`apps/web`)**: A dedicated **React 19 + TypeScript + Vite** web application featuring responsive layouts, real-time search, interactive 3D layered document card stacks, and drag-to-verify controls.
-2. **PaperTrail Mobile (`apps/mobile`)**: A native **Expo SDK 52 + React Native** application targeting Android (APK/AAB) and iOS, featuring camera document scanning (`expo-camera`), biometric authentication (`expo-local-authentication`), offline metadata caching (`expo-secure-store`), and native sharing (`expo-sharing`).
-3. **PaperTrail Backend (`apps/api`)**: A centralized **NestJS 11 REST API** operating under `/api/v1` with Swagger/OpenAPI documentation, Clerk session verification, Cloudflare R2 presigned storage pipelines, and Neon PostgreSQL via Prisma ORM.
-4. **PaperTrail Worker (`apps/worker`)**: An asynchronous background processing worker powered by Inngest for Gemini OCR metadata extraction and nightly expiration reminder alerts.
+1. **PaperTrail Web & Mobile (`apps/web`)**: A dedicated **React 19 + TypeScript + Vite** web application packaged for Android via **Capacitor 8**, featuring responsive layouts, real-time search, and native device capabilities (Camera, Share Sheet, Local Notifications, Biometrics, Status Bar).
+2. **PaperTrail Backend (`apps/api`)**: A centralized **NestJS 11 REST API** operating under `/api/v1` with Swagger/OpenAPI documentation, Clerk session verification, Cloudflare R2 presigned storage pipelines, and Neon PostgreSQL via Prisma ORM.
+3. **PaperTrail Worker (`apps/worker`)**: An asynchronous background processing worker powered by Inngest for Gemini OCR metadata extraction and nightly expiration reminder alerts.
 
 ---
 
@@ -16,8 +15,7 @@ PaperTrail is an enterprise-grade personal document management ecosystem archite
 ```
 papertrail/
 ├── apps/
-│   ├── web/                  # React 19 SPA (Vite, Tailwind CSS, Framer Motion)
-│   ├── mobile/               # Native Android & iOS (Expo, React Native, Camera)
+│   ├── web/                  # React 19 SPA & Capacitor Android (Vite, Tailwind CSS, Native Bridge)
 │   ├── api/                  # Centralized NestJS REST API (/api/v1, Swagger, Clerk)
 │   └── worker/               # Background Worker (Inngest, Gemini OCR, Resend)
 │
@@ -36,10 +34,10 @@ papertrail/
 │   ├── architecture.md       # Detailed system design & cross-platform sync
 │   ├── api-reference.md      # Full REST API endpoints specification
 │   ├── database-schema.md    # Prisma ERD & relational table schemas
-│   └── deployment.md         # Production deployment & EAS mobile builds
+│   └── deployment.md         # Production deployment
 │
 ├── .github/
-│   └── workflows/            # GitHub Actions CI & Mobile EAS build workflows
+│   └── workflows/            # GitHub Actions CI
 │
 ├── pnpm-workspace.yaml       # pnpm workspace definition
 ├── turbo.json                # Turborepo task pipeline
@@ -52,8 +50,7 @@ papertrail/
 
 | Platform / Layer | Technologies & Tools |
 | :--- | :--- |
-| **Web Application** | React 19, TypeScript, Vite 6, Tailwind CSS 3.4, Framer Motion 12, Lucide React |
-| **Mobile Application** | Expo SDK 52, React Native 0.76, Expo Router, Reanimated, Expo Camera, SecureStore |
+| **Web & Mobile App** | React 19, TypeScript, Vite 6, Tailwind CSS 3.4, Framer Motion 12, Capacitor 8 (Android) |
 | **Backend API** | NestJS 11, TypeScript, REST API (`/api/v1`), Swagger / OpenAPI, Throttler rate limiting |
 | **Database & ORM** | Neon Serverless PostgreSQL, Prisma ORM 6 |
 | **Object Storage** | Cloudflare R2 (Private bucket with short-lived presigned upload/download URLs) |
@@ -66,11 +63,11 @@ papertrail/
 
 ## Core Principles & Engineering Standards
 
-- **React Only for Web**: The web experience is a pure React SPA built with Vite for optimal speed and client interaction—**no Next.js dependencies**.
-- **Native Mobile Experience**: The mobile app is built using React Native and Expo—**not a WebView**. It uses native device hardware for camera framing, biometric authentication, and offline storage.
-- **Single Source of Truth**: Both frontends consume the exact same backend endpoints, database schema, and storage buckets through the shared `@papertrail/api-client` package.
+- **Pure Client Architecture**: The web and mobile experience is a pure React SPA bundled with Vite for optimal speed, packaged natively for Android via Capacitor 8.
+- **Native Android Capabilities**: Uses Capacitor plugins for native Android camera framing, biometrics, share sheets, local notifications, and system status bar controls.
+- **Single Source of Truth**: The client consumes the backend endpoints, database schema, and storage buckets through the shared `@papertrail/api-client` package.
 - **Direct Presigned Storage**: Sensitive document files are uploaded directly from client applications to private Cloudflare R2 storage using short-lived signed URLs, preventing server bottlenecks and credential leakage.
-- **Zero-Config Local Fallback**: Both Web and Mobile apps include graceful offline fallback datasets so developers can test the complete UI without needing live cloud credentials immediately.
+- **Zero-Config Local Fallback**: Full offline fallback datasets so developers can test the complete UI without needing live cloud credentials immediately.
 
 ---
 
@@ -100,8 +97,8 @@ pnpm dev:web
 # Start the NestJS Backend API (http://localhost:8000/api/v1)
 pnpm dev:api
 
-# Start the Expo Mobile Development Server
-pnpm dev:mobile
+# Launch Android in Android Studio
+pnpm dev:android
 
 # Start the Inngest Background Worker
 pnpm dev:worker
@@ -114,21 +111,18 @@ pnpm build
 
 ---
 
-## Mobile Application (Android APK & AAB)
+## Android Mobile Application (Capacitor)
 
-The mobile application supports standalone Android builds via EAS:
+PaperTrail packages natively for Android using Capacitor:
 
 ```bash
-cd apps/mobile
+cd apps/web
 
-# Build Android Standalone APK (for testing on physical devices)
-pnpm build:android:preview
+# Sync web assets and plugins to native Android
+npx cap sync android
 
-# Build Production Android App Bundle (.aab for Google Play Store)
-pnpm build:android:prod
-
-# Build iOS Production Archive
-pnpm build:ios:prod
+# Open Android Studio
+npx cap open android
 ```
 
 ---

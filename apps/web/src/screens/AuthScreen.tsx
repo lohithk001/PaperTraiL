@@ -1,19 +1,41 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Eye, EyeOff, ArrowRight } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Eye, EyeOff, ArrowRight, CheckCircle2, ShieldCheck } from 'lucide-react';
 import { useDocumentContext } from '../context/DocumentContext';
 
 export const AuthScreen: React.FC = () => {
-  const { setActiveTab } = useDocumentContext();
+  const { setActiveTab, userProfile, updateUserProfile } = useDocumentContext();
   const [isSignUp, setIsSignUp] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [authNotice, setAuthNotice] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setActiveTab('home');
+    setIsLoading(true);
+    setTimeout(() => {
+      updateUserProfile({
+        name: name.trim() ? name.trim() : userProfile.name,
+        email: email.trim() ? email.trim() : userProfile.email,
+      });
+      setIsLoading(false);
+      setActiveTab('home');
+    }, 350);
+  };
+
+  const handleGoogleSignIn = () => {
+    setIsLoading(true);
+    setTimeout(() => {
+      updateUserProfile({
+        name: userProfile.name || 'Lohith Kumar',
+        email: 'lohit.k@gmail.com',
+      });
+      setIsLoading(false);
+      setActiveTab('home');
+    }, 450);
   };
 
   return (
@@ -97,7 +119,7 @@ export const AuthScreen: React.FC = () => {
               {!isSignUp && (
                 <button
                   type="button"
-                  onClick={() => alert('Demo vault: Use any password to sign in.')}
+                  onClick={() => setAuthNotice('Password reset instruction will be sent to your registered email.')}
                   className="text-[11px] font-medium text-[#1D5FF0] hover:underline"
                 >
                   Forgot?
@@ -123,14 +145,38 @@ export const AuthScreen: React.FC = () => {
             </div>
           </div>
 
+          {authNotice && (
+            <motion.div
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="p-3 rounded-xl bg-blue-50 border border-blue-200 text-xs text-blue-700 flex items-center justify-between"
+            >
+              <span>{authNotice}</span>
+              <button 
+                type="button" 
+                onClick={() => setAuthNotice(null)} 
+                className="font-bold ml-2 text-blue-900"
+              >
+                ✕
+              </button>
+            </motion.div>
+          )}
+
           {/* Sign In Button (Screen 3 Spec) */}
           <div className="pt-2">
             <button
               type="submit"
-              className="w-full h-[50px] rounded-xl bg-[#1D5FF0] hover:bg-[#0752D9] active:scale-[0.98] text-white font-semibold text-sm shadow-card transition-all flex items-center justify-center gap-2 cursor-pointer"
+              disabled={isLoading}
+              className="w-full h-[50px] rounded-xl bg-[#1D5FF0] hover:bg-[#0752D9] active:scale-[0.98] text-white font-semibold text-sm shadow-card transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
             >
-              <span>{isSignUp ? 'Create Account' : 'Sign In'}</span>
-              <ArrowRight className="w-4 h-4 stroke-[2.5]" />
+              {isLoading ? (
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <>
+                  <span>{isSignUp ? 'Create Account' : 'Sign In'}</span>
+                  <ArrowRight className="w-4 h-4 stroke-[2.5]" />
+                </>
+              )}
             </button>
           </div>
 
@@ -147,8 +193,9 @@ export const AuthScreen: React.FC = () => {
           {/* Outlined Continue with Google button */}
           <button
             type="button"
-            onClick={() => setActiveTab('home')}
-            className="w-full h-[50px] px-4 rounded-xl bg-white hover:bg-slate-50 border border-[#E2E8F0] active:scale-[0.98] text-[#0F172A] font-semibold text-xs shadow-subtle transition-all flex items-center justify-center gap-3 cursor-pointer"
+            onClick={handleGoogleSignIn}
+            disabled={isLoading}
+            className="w-full h-[50px] px-4 rounded-xl bg-white hover:bg-slate-50 border border-[#E2E8F0] active:scale-[0.98] text-[#0F172A] font-semibold text-xs shadow-subtle transition-all flex items-center justify-center gap-3 cursor-pointer disabled:opacity-60"
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24">
               <path

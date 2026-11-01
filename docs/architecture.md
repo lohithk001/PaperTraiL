@@ -9,24 +9,22 @@ This document describes the high-level system architecture, cross-platform synch
 PaperTrail is organized as a unified monorepo containing three independently deployable applications and six shared packages:
 
 ```
-┌─────────────────────────────────┐       ┌─────────────────────────────────┐
-│         PaperTrail Web          │       │       PaperTrail Mobile         │
-│     (React 19 + TypeScript)     │       │   (Expo + React Native Native)  │
-│    Vite SPA, Tailwind CSS       │       │    Android APK/AAB & iOS App    │
-└────────────────┬────────────────┘       └────────────────┬────────────────┘
-                 │                                         │
-                 │   HTTP / REST (JWT Bearer Auth)         │
-                 └───────────────────┬─────────────────────┘
-                                     │
-                                     ▼
-                     ┌───────────────────────────────┐
-                     │      PaperTrail Backend       │
-                     │  (NestJS 11 REST API /api/v1) │
-                     │  Swagger OpenAPI, Rate Limit  │
-                     └───────┬───────────────┬───────┘
-                             │               │
-            ┌────────────────┴──────┐        └────────────────┐
-            ▼                       ▼                         ▼
+┌─────────────────────────────────────────────────────────────┐
+│                 PaperTrail Web & Android App                │
+│     (React 19 + TypeScript + Vite + Capacitor 8 Android)    │
+│    Responsive Desktop / Tablet / Mobile Full-Bleed Layout    │
+└──────────────────────────────┬──────────────────────────────┘
+                               │
+                               │   HTTP / REST (JWT Bearer Auth)
+                               ▼
+               ┌───────────────────────────────┐
+               │      PaperTrail Backend       │
+               │  (NestJS 11 REST API /api/v1) │
+               │  Swagger OpenAPI, Rate Limit  │
+               └───────┬───────────────┬───────┘
+                       │               │
+      ┌────────────────┴──────┐        └────────────────┐
+      ▼                       ▼                         ▼
 ┌───────────────────────┐ ┌───────────────────┐ ┌───────────────────────────┐
 │    Neon PostgreSQL    │ │   Cloudflare R2   │ │     Inngest Worker        │
 │      Prisma ORM       │ │  Private Storage  │ │   Background Jobs & Cron  │
@@ -38,27 +36,18 @@ PaperTrail is organized as a unified monorepo containing three independently dep
 
 ## 2. Core Service Boundaries
 
-### A. PaperTrail Web (`apps/web`)
-- **Technology**: React 19, TypeScript, Vite 6, Tailwind CSS 3.4, Framer Motion 12, Lucide React.
-- **Responsibility**: Desktop, tablet, and responsive browser experience.
-- **Key Characteristics**: Preserves PaperTrail's signature cobalt blue (`#0861E8`) 3D layered document card stack, responsive viewport switcher (iPhone frame mode vs. expanded workspace mode), real-time document search, and interactive drag-to-verify slider.
+### A. PaperTrail Web & Mobile (`apps/web`)
+- **Technology**: React 19, TypeScript, Vite 6, Tailwind CSS 3.4, Framer Motion 12, Lucide React, Capacitor 8.
+- **Responsibility**: Responsive browser experience on desktop/tablet and native Android APK/AAB package.
+- **Hardware Integrations (Capacitor Native Bridge)**:
+  - Camera scanning with `@capacitor/camera` (viewfinder, flash controls, and gallery picker).
+  - Native file sharing via `@capacitor/share`.
+  - Push and local notifications via `@capacitor/local-notifications` and `@capacitor/push-notifications`.
+  - Android Status Bar styling and Splash Screen lifecycle controls.
+  - Hardware back button listener for fluid navigation.
 - **Data Integration**: Consumes `@papertrail/api-client` with local offline state fallback.
 
-### B. PaperTrail Mobile (`apps/mobile`)
-- **Technology**: Expo SDK 52, React Native 0.76, Expo Router, TypeScript, Reanimated.
-- **Target Outputs**:
-  - **Android APK**: Standalone installation package for physical device testing.
-  - **Android AAB**: Android App Bundle for Google Play Store publication.
-  - **iOS App**: Production `.ipa` and Simulator build for TestFlight / App Store.
-- **Hardware Integrations**:
-  - Camera scanning with `expo-camera` (viewfinder, laser beam animation, edge crop guides).
-  - Native file picker with `expo-document-picker`.
-  - Biometric authentication via `expo-local-authentication` (Face ID / Touch ID / Android BiometricPrompt).
-  - Secure offline token storage via `expo-secure-store`.
-  - Push notifications via `expo-notifications`.
-  - Native OS sharing via `expo-sharing`.
-
-### C. Centralized Backend (`apps/api`)
+### B. Centralized Backend (`apps/api`)
 - **Technology**: NestJS 11, TypeScript, Swagger/OpenAPI, Prisma ORM, `@clerk/backend`, `@aws-sdk/client-s3`.
 - **Responsibility**: Single source of truth for business logic, document metadata, authorization, storage presigning, and expiration mathematics.
 - **Security**: Strict document ownership guards, rate limiting, and input validation via `@papertrail/validators`.
@@ -104,7 +93,7 @@ sequenceDiagram
 
 Both Web and Mobile clients interact with the identical REST API under `/api/v1`:
 - **Server Authoritative**: All mutations (create, rename, delete, renew) take effect on Neon PostgreSQL immediately.
-- **Offline Cache Invalidation**: Mobile caches documents using `expo-secure-store`. When the device reconnects, the cache is refreshed against the server's `updatedAt` timestamps.
+- **Offline Cache Invalidation**: The client caches document metadata locally using persistent browser/Capacitor storage. When the device reconnects, the cache is refreshed against the server's `updatedAt` timestamps.
 - **Simultaneous Access**: Actions performed on an Android phone (e.g. scanning an insurance card) are instantly visible on the Web application upon refreshing or query invalidation.
 
 ---
