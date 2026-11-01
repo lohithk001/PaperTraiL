@@ -1,0 +1,41 @@
+{
+  "name": "@papertrail/api",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/main",
+    "start:dev": "nest start --watch",
+    "prisma:generate": "prisma generate --schema=../../prisma/schema.prisma",
+    "prisma:push": "prisma db push --schema=../../prisma/schema.prisma"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.750.0",
+    "@aws-sdk/s3-request-presigner": "^3.750.0",
+    "@clerk/backend": "^1.24.1",
+    "@google/genai": "^2.32.0",
+    "@nestjs/common": "^11.0.10",
+    "@nestjs/config": "^4.0.0",
+    "@nestjs/core": "^11.0.10",
+    "@nestjs/platform-express": "^11.0.10",
+    "@nestjs/swagger": "^11.0.4",
+    "@nestjs/throttler": "^6.4.0",
+    "@papertrail/contracts": "workspace:*",
+    "@papertrail/design-tokens": "workspace:*",
+    "@papertrail/types": "workspace:*",
+    "@papertrail/validators": "workspace:*",
+    "@prisma/client": "^6.4.1",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.1",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.1"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^11.0.4",
+    "@nestjs/schematics": "^11.0.2",
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.13.4",
+    "prisma": "^6.4.1",
+    "typescript": "~5.7.2"
+  }
+}

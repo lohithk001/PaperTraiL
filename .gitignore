@@ -64,4 +64,6 @@ Thumbs.db
 # Temporary and cache directories
 .temp/
 .tmp/
-.cache/S
+.cache/
+.turbo/
+.expo/

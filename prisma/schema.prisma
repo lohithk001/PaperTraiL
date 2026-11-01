@@ -1,0 +1,176 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum DocumentCategory {
+  Insurance
+  Identity
+  Vehicle
+  Education
+  Warranty
+  Finance
+  Medical
+}
+
+enum UrgencyLevel {
+  critical
+  warning
+  normal
+}
+
+enum NotificationType {
+  alert
+  success
+  info
+}
+
+model User {
+  id                 String         @id @default(uuid())
+  clerkId            String         @unique
+  email              String         @unique
+  fullName           String
+  tagline            String?        @default("Personal Document Vault")
+  avatarUrl          String?
+  storageUsedBytes   BigInt         @default(0)
+  storageQuotaBytes  BigInt         @default(524288000) // 500 MB default quota
+  encryptionEnabled  Boolean        @default(true)
+  biometricEnabled   Boolean        @default(true)
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  documents          Document[]
+  folders            Folder[]
+  reminders          Reminder[]
+  notifications      Notification[]
+  auditLogs          AuditLog[]
+  shareTokens        ShareToken[]
+
+  @@index([clerkId])
+  @@index([email])
+}
+
+model Folder {
+  id        String     @id @default(uuid())
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  color     String?    @default("#0861E8")
+  icon      String?    @default("folder")
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  documents Document[]
+
+  @@unique([userId, name])
+  @@index([userId])
+}
+
+model Document {
+  id              String           @id @default(uuid())
+  userId          String
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  folderId        String?
+  folder          Folder?          @relation(fields: [folderId], references: [id], onDelete: SetNull)
+
+  title           String
+  category        DocumentCategory
+  fileKey         String           @unique // Cloudflare R2 object storage key
+  fileType        String           // pdf, png, jpg, jpeg
+  fileSizeBytes   Int
+  issueDate       DateTime?        @db.Date
+  expiryDate      DateTime?        @db.Date
+  isVerified      Boolean          @default(false)
+  policyNumber    String?
+  issuer          String?
+  notes           String?          @db.Text
+  tags            String[]         @default([])
+  thumbnailUrl    String?
+  ocrText         String?          @db.Text
+  isPriority      Boolean          @default(false)
+
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  reminders       Reminder[]
+  shareTokens     ShareToken[]
+
+  @@index([userId])
+  @@index([userId, category])
+  @@index([userId, expiryDate])
+  @@index([userId, title])
+}
+
+model Reminder {
+  id          String       @id @default(uuid())
+  userId      String
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  documentId  String
+  document    Document     @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  title       String
+  dueDate     DateTime     @db.Date
+  urgency     UrgencyLevel @default(normal)
+  isCompleted Boolean      @default(false)
+
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([userId])
+  @@index([userId, dueDate])
+  @@index([documentId])
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  title     String
+  message   String
+  type      NotificationType @default(info)
+  isRead    Boolean          @default(false)
+  metadata  Json?
+
+  createdAt DateTime         @default(now())
+
+  @@index([userId, isRead])
+  @@index([userId, createdAt])
+}
+
+model ShareToken {
+  id              String    @id @default(uuid())
+  token           String    @unique @default(uuid())
+  documentId      String
+  document        Document  @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  createdByUserId String
+  user            User      @relation(fields: [createdByUserId], references: [id], onDelete: Cascade)
+
+  expiresAt       DateTime
+  accessCount     Int       @default(0)
+  isRevoked       Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+
+  @@index([token])
+  @@index([documentId])
+}
+
+model AuditLog {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  action       String   // e.g. "DOCUMENT_UPLOAD", "DOCUMENT_DELETE", "SHARE_ACCESS"
+  resourceType String
+  resourceId   String?
+  ipAddress    String?
+  userAgent    String?
+
+  createdAt    DateTime @default(now())
+
+  @@index([userId, createdAt])
+}

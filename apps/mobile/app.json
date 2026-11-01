@@ -1,0 +1,61 @@
+{
+  "expo": {
+    "name": "PaperTrail",
+    "slug": "papertrail-vault",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "papertrail",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0861E8"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.papertrail.vault",
+      "infoPlist": {
+        "NSCameraUsageDescription": "PaperTrail uses your camera to scan and digitize important personal documents.",
+        "NSPhotoLibraryUsageDescription": "PaperTrail needs access to your gallery to upload document files and receipts.",
+        "NSFaceIDUsageDescription": "PaperTrail uses Face ID to securely unlock your personal document vault."
+      }
+    },
+    "android": {
+      "package": "com.papertrail.vault",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0861E8"
+      },
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "USE_BIOMETRIC",
+        "USE_FINGERPRINT",
+        "RECEIVE_BOOT_COMPLETED"
+      ]
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow PaperTrail to scan physical documents."
+        }
+      ],
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Allow PaperTrail to unlock using Face ID."
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "papertrail-vault-id"
+      }
+    }
+  }
+}
