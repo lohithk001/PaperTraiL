@@ -66,3 +66,20 @@ export const DocumentQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
 });
+
+export const OnboardingReminderPreferencesSchema = z.object({
+  documentExpiry: z.boolean().default(true),
+  warrantyExpiry: z.boolean().default(true),
+  insuranceRenewal: z.boolean().default(true),
+  billPayment: z.boolean().default(true),
+});
+
+export const UpdateOnboardingStateSchema = z.object({
+  step: z.number().int().min(1).max(6).optional(),
+  completed: z.boolean().optional(),
+  selectedCategories: z.array(z.string()).optional(),
+  reminderPreferences: OnboardingReminderPreferencesSchema.partial().optional(),
+  displayName: z.string().min(1).max(100).optional(),
+  preferredLanguage: z.string().max(20).optional(),
+  avatarUrl: z.string().url().optional().or(z.literal('')).optional(),
+});

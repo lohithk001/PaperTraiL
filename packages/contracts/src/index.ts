@@ -13,7 +13,9 @@ import {
   UpdateDocumentSchema, 
   CreateReminderSchema, 
   CreateFolderSchema, 
-  RequestPresignedUploadSchema 
+  RequestPresignedUploadSchema,
+  UpdateOnboardingStateSchema,
+  OnboardingReminderPreferencesSchema
 } from '@papertrail/validators';
 
 export type CreateDocumentDto = z.infer<typeof CreateDocumentSchema>;
@@ -21,6 +23,8 @@ export type UpdateDocumentDto = z.infer<typeof UpdateDocumentSchema>;
 export type CreateReminderDto = z.infer<typeof CreateReminderSchema>;
 export type CreateFolderDto = z.infer<typeof CreateFolderSchema>;
 export type RequestPresignedUploadDto = z.infer<typeof RequestPresignedUploadSchema>;
+export type UpdateOnboardingDto = z.infer<typeof UpdateOnboardingStateSchema>;
+export type OnboardingReminderPreferencesDto = z.infer<typeof OnboardingReminderPreferencesSchema>;
 
 export interface PresignedUploadResponse {
   uploadUrl: string;
@@ -55,6 +59,8 @@ export const API_ROUTES = {
   AUTH: {
     ME: '/api/v1/auth/me',
     SYNC_CLERK: '/api/v1/auth/sync',
+    ONBOARDING: '/api/v1/auth/onboarding',
+    ONBOARDING_COMPLETE: '/api/v1/auth/onboarding/complete',
   },
   DOCUMENTS: {
     BASE: '/api/v1/documents',

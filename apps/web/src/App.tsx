@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { DocumentProvider, useDocumentContext } from './context/DocumentContext';
+import { ClerkAuthProvider } from './auth/ClerkAuthProvider';
 import { BentoLayout } from './components/bento/BentoLayout';
 import { SplashScreen } from './screens/SplashScreen';
 import { OnboardingScreen } from './screens/OnboardingScreen';
@@ -101,7 +102,9 @@ const AppContent: React.FC = () => {
 export default function App() {
   return (
     <DocumentProvider>
-      <AppContent />
+      <ClerkAuthProvider>
+        <AppContent />
+      </ClerkAuthProvider>
     </DocumentProvider>
   );
 }

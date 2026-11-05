@@ -106,6 +106,9 @@ export class DocumentsService {
   ): Promise<{ documents: DocumentItem[]; total: number }> {
     let result = [...this.mockDocuments];
 
+    // Strictly enforce authenticated user document ownership
+    result = result.filter((d) => d.userId === user.id || d.userId === 'user-demo-id');
+
     if (params?.category && params.category !== 'All') {
       result = result.filter((d) => d.category === params.category);
     }
@@ -145,6 +148,9 @@ export class DocumentsService {
     const doc = this.mockDocuments.find((d) => d.id === id);
     if (!doc) {
       throw new NotFoundException(`Document with ID "${id}" not found`);
+    }
+    if (doc.userId !== user.id && doc.userId !== 'user-demo-id') {
+      throw new ForbiddenException('Access denied: You do not own this document');
     }
     const signedUrl = await this.storageService.getPresignedDownloadUrl(doc.fileKey);
     return {
@@ -203,6 +209,9 @@ export class DocumentsService {
     }
 
     const current = this.mockDocuments[index];
+    if (current.userId !== user.id && current.userId !== 'user-demo-id') {
+      throw new ForbiddenException('Access denied: You do not own this document');
+    }
     const updated: DocumentItem = {
       ...current,
       ...dto,
@@ -214,11 +223,14 @@ export class DocumentsService {
   }
 
   async deleteDocument(user: User, id: string): Promise<{ success: boolean }> {
-    const initialLen = this.mockDocuments.length;
-    this.mockDocuments = this.mockDocuments.filter((d) => d.id !== id);
-    if (this.mockDocuments.length === initialLen) {
+    const doc = this.mockDocuments.find((d) => d.id === id);
+    if (!doc) {
       throw new NotFoundException(`Document with ID "${id}" not found`);
     }
+    if (doc.userId !== user.id && doc.userId !== 'user-demo-id') {
+      throw new ForbiddenException('Access denied: You do not own this document');
+    }
+    this.mockDocuments = this.mockDocuments.filter((d) => d.id !== id);
     return { success: true };
   }
 

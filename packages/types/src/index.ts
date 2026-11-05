@@ -11,6 +11,13 @@ export type UrgencyLevel = 'critical' | 'warning' | 'normal';
 
 export type FileFormat = 'pdf' | 'png' | 'jpg' | 'jpeg';
 
+export interface ReminderPreferences {
+  documentExpiry: boolean;
+  warrantyExpiry: boolean;
+  insuranceRenewal: boolean;
+  billPayment: boolean;
+}
+
 export interface User {
   id: string;
   clerkId: string;
@@ -22,6 +29,11 @@ export interface User {
   storageQuotaBytes: number;
   encryptionEnabled: boolean;
   biometricEnabled: boolean;
+  onboardingCompleted?: boolean;
+  onboardingStep?: number;
+  selectedDocumentCategories?: string[];
+  reminderPreferences?: ReminderPreferences;
+  preferredLanguage?: string;
   createdAt: string;
   updatedAt: string;
 }

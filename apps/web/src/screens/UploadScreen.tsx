@@ -13,7 +13,7 @@ import {
   Trash2,
   AlertCircle
 } from 'lucide-react';
-import { useDocumentContext } from '../context/DocumentContext';
+import { useDocumentContext, formatBytes, parseFileSizeToBytes } from '../context/DocumentContext';
 import { captureDocumentPhoto, pickGalleryPhoto } from '../services/nativeService';
 import { DocumentCategory } from '../types';
 
@@ -24,6 +24,8 @@ interface UploadQueueItem {
   type: 'pdf' | 'jpg' | 'png';
   progress: number;
   status: 'uploading' | 'complete' | 'error';
+  fileUrl?: string;
+  fileSizeBytes?: number;
 }
 
 export const UploadScreen: React.FC = () => {
@@ -55,28 +57,36 @@ export const UploadScreen: React.FC = () => {
   ];
 
   const processFiles = (files: FileList | File[]) => {
-    const newItems: UploadQueueItem[] = [];
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       const ext = file.name.split('.').pop()?.toLowerCase();
-      const fileType = ext === 'png' ? 'png' : ext === 'jpg' || ext === 'jpeg' ? 'jpg' : 'pdf';
-      const sizeMb = (file.size / (1024 * 1024)).toFixed(1) + ' MB';
+      const fileType = ext === 'png' ? 'png' : ext === 'jpg' || ext === 'jpeg' ? 'jpg' : ext === 'webp' ? 'png' : 'pdf';
+      const sizeFormatted = formatBytes(file.size);
+      const itemId = `file-${Date.now()}-${i}`;
       
       const item: UploadQueueItem = {
-        id: `file-${Date.now()}-${i}`,
+        id: itemId,
         name: file.name,
-        size: sizeMb,
+        size: sizeFormatted,
         type: fileType,
         progress: 100,
         status: 'complete',
+        fileSizeBytes: file.size,
       };
-      newItems.push(item);
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUrl = typeof reader.result === 'string' ? reader.result : undefined;
+        setQueue(prev => prev.map(q => q.id === itemId ? { ...q, fileUrl: dataUrl } : q));
+      };
+      reader.readAsDataURL(file);
+
+      setQueue(prev => [...prev, item]);
 
       if (!documentTitle && i === 0) {
         setDocumentTitle(file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' '));
       }
     }
-    setQueue(prev => [...prev, ...newItems]);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -96,13 +106,17 @@ export const UploadScreen: React.FC = () => {
   const handleScanClick = async () => {
     const photo = await captureDocumentPhoto();
     if (photo) {
+      const dataUrl = photo;
+      const approxBytes = Math.round(photo.length * 0.75);
       const item: UploadQueueItem = {
         id: `file-${Date.now()}`,
         name: `Scanned_Doc_${new Date().toISOString().split('T')[0]}.jpg`,
-        size: '1.4 MB',
+        size: formatBytes(approxBytes),
         type: 'jpg',
         progress: 100,
         status: 'complete',
+        fileUrl: dataUrl,
+        fileSizeBytes: approxBytes,
       };
       setQueue(prev => [...prev, item]);
       if (!documentTitle) setDocumentTitle('Scanned Vault Document');
@@ -114,13 +128,17 @@ export const UploadScreen: React.FC = () => {
   const handleGalleryClick = async () => {
     const photo = await pickGalleryPhoto();
     if (photo) {
+      const dataUrl = photo;
+      const approxBytes = Math.round(photo.length * 0.75);
       const item: UploadQueueItem = {
         id: `file-${Date.now()}`,
         name: `Imported_Image_${Date.now()}.jpg`,
-        size: '2.1 MB',
+        size: formatBytes(approxBytes),
         type: 'jpg',
         progress: 100,
         status: 'complete',
+        fileUrl: dataUrl,
+        fileSizeBytes: approxBytes,
       };
       setQueue(prev => [...prev, item]);
       if (!documentTitle) setDocumentTitle('Imported Gallery Document');
@@ -141,7 +159,7 @@ export const UploadScreen: React.FC = () => {
 
     setIsSubmitting(true);
     setTimeout(() => {
-      queue.forEach((item, index) => {
+      queue.forEach((item) => {
         const title = queue.length === 1 && documentTitle 
           ? documentTitle 
           : item.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ');
@@ -152,6 +170,9 @@ export const UploadScreen: React.FC = () => {
           title,
           category,
           fileType: item.type,
+          fileName: item.name,
+          fileUrl: item.fileUrl,
+          fileSizeBytes: item.fileSizeBytes || parseFileSizeToBytes(item.size),
           fileSize: item.size,
           issueDate: new Date().toISOString().split('T')[0],
           expiryDate: expiryDate || null,

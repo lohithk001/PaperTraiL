@@ -7,12 +7,22 @@ export type DocumentCategory =
   | 'Finance' 
   | 'Medical';
 
+export interface ReminderPreferences {
+  documentExpiry: boolean;
+  warrantyExpiry: boolean;
+  insuranceRenewal: boolean;
+  billPayment: boolean;
+}
+
 export interface DocumentItem {
   id: string;
   title: string;
   category: DocumentCategory;
   fileType: 'pdf' | 'png' | 'jpg';
   fileSize: string;
+  fileSizeBytes?: number;
+  fileName?: string;
+  fileUrl?: string;
   issueDate: string;
   expiryDate: string | null;
   daysLeft: number | null;
@@ -65,6 +75,11 @@ export interface UserProfile {
   storageUsedPercent: number;
   encryptionEnabled: boolean;
   biometricEnabled: boolean;
+  onboardingCompleted?: boolean;
+  onboardingStep?: number;
+  selectedDocumentCategories?: string[];
+  reminderPreferences?: ReminderPreferences;
+  preferredLanguage?: string;
 }
 
 export interface SharedDocumentItem {

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Bell } from 'lucide-react';
+import { SignedIn, SignedOut, UserButton } from '@clerk/clerk-react';
 import { useDocumentContext } from '../../context/DocumentContext';
 import { BentoDock } from './BentoDock';
 import { BentoRightRail } from './BentoRightRail';
@@ -69,20 +70,27 @@ export const BentoLayout: React.FC<{ children: React.ReactNode }> = ({ children 
               )}
             </button>
 
-            {/* Profile Avatar with Purple-Pink Halo Ring placed prominently at the Top */}
-            <button
-              onClick={() => setActiveTab('settings')}
-              className="w-9 h-9 rounded-full p-[1.5px] bg-gradient-to-tr from-purple-500 via-pink-400 to-indigo-500 hover:scale-105 active:scale-95 transition-all cursor-pointer shadow-2xs"
-              title={`${userProfile.name} • Settings & Profile`}
-            >
-              <div className="w-full h-full rounded-full overflow-hidden bg-white ring-1 ring-white">
-                <img 
-                  src={userProfile.avatarUrl} 
-                  alt={userProfile.name}
-                  className="w-full h-full object-cover" 
+            {/* Profile Avatar / Clerk User Button placed prominently at the Top */}
+            <SignedIn>
+              <div className="w-9 h-9 flex items-center justify-center">
+                <UserButton
+                  appearance={{
+                    elements: {
+                      userButtonAvatarBox: 'w-9 h-9 ring-2 ring-indigo-500/30 rounded-full shadow-2xs',
+                      userButtonTrigger: 'focus:outline-none',
+                    },
+                  }}
                 />
               </div>
-            </button>
+            </SignedIn>
+            <SignedOut>
+              <button
+                onClick={() => setActiveTab('auth')}
+                className="px-3 py-1.5 rounded-full bg-[#1D5FF0] hover:bg-[#1650D8] text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+              >
+                Sign In
+              </button>
+            </SignedOut>
           </div>
         </header>
 

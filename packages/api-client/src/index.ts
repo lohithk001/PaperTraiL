@@ -14,7 +14,8 @@ import {
   UpdateDocumentDto, 
   CreateReminderDto, 
   CreateFolderDto, 
-  PresignedUploadResponse 
+  PresignedUploadResponse,
+  UpdateOnboardingDto
 } from '@papertrail/contracts';
 
 export interface ApiClientConfig {
@@ -32,6 +33,14 @@ export class PaperTrailApiClient {
     this.baseUrl = config.baseUrl.replace(/\/$/, '');
     this.getToken = config.getToken;
     this.onError = config.onError;
+  }
+
+  setTokenGetter(getToken: () => Promise<string | null>) {
+    this.getToken = getToken;
+  }
+
+  setBaseUrl(url: string) {
+    this.baseUrl = url.replace(/\/$/, '');
   }
 
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
@@ -79,9 +88,22 @@ export class PaperTrailApiClient {
     }
   }
 
-  // --- Auth & User ---
+  // --- Auth & User & Onboarding ---
   async getCurrentUser(): Promise<User> {
     return this.request<User>(API_ROUTES.AUTH.ME);
+  }
+
+  async updateOnboardingState(dto: UpdateOnboardingDto): Promise<User> {
+    return this.request<User>(API_ROUTES.AUTH.ONBOARDING, {
+      method: 'PATCH',
+      body: JSON.stringify(dto),
+    });
+  }
+
+  async completeOnboarding(): Promise<User> {
+    return this.request<User>(API_ROUTES.AUTH.ONBOARDING_COMPLETE, {
+      method: 'POST',
+    });
   }
 
   // --- Storage & Uploads ---

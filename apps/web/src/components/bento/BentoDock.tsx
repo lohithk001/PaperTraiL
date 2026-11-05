@@ -10,6 +10,7 @@ import {
   LogOut
 } from 'lucide-react';
 import { useDocumentContext } from '../../context/DocumentContext';
+import { useVaultAuth } from '../../auth/ClerkAuthProvider';
 
 export const BentoDock: React.FC = () => {
   const { 
@@ -18,6 +19,7 @@ export const BentoDock: React.FC = () => {
     userProfile, 
     setIsUploadModalOpen
   } = useDocumentContext();
+  const { signOut } = useVaultAuth();
 
   const isNavActive = (tab: string) => {
     if (tab === 'home') return activeTab === 'home' || activeTab === 'overview';
@@ -25,9 +27,9 @@ export const BentoDock: React.FC = () => {
     return activeTab === tab;
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     if (confirm('Lock vault and log out?')) {
-      setActiveTab('auth');
+      await signOut();
     }
   };
 
@@ -194,21 +196,6 @@ export const BentoDock: React.FC = () => {
           title="Log Out & Lock Vault"
         >
           <LogOut className="w-5 h-5 stroke-[1.8]" />
-        </button>
-
-        {/* Profile Avatar with Purple-Pink Halo Ring */}
-        <button
-          onClick={() => setActiveTab('settings')}
-          className="w-10 h-10 rounded-full p-[1.5px] bg-gradient-to-tr from-purple-500 via-pink-400 to-indigo-500 hover:scale-105 active:scale-95 transition-all cursor-pointer shadow-2xs mt-0.5"
-          title={`${userProfile.name} • Settings`}
-        >
-          <div className="w-full h-full rounded-full overflow-hidden bg-white ring-1 ring-white">
-            <img 
-              src={userProfile.avatarUrl} 
-              alt={userProfile.name}
-              className="w-full h-full object-cover" 
-            />
-          </div>
         </button>
 
       </div>

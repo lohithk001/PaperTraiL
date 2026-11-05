@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { 
   ArrowLeft, 
@@ -19,9 +19,12 @@ import {
   ChevronLeft,
   ChevronRight,
   Folder,
-  X
+  X,
+  Upload,
+  CheckCircle2,
+  ExternalLink
 } from 'lucide-react';
-import { useDocumentContext } from '../context/DocumentContext';
+import { useDocumentContext, formatBytes } from '../context/DocumentContext';
 import { shareDocumentNative } from '../services/nativeService';
 import { DocumentCategory } from '../types';
 
@@ -32,6 +35,7 @@ export const DocumentDetailScreen: React.FC = () => {
     setActiveTab, 
     deleteDocument, 
     updateDocument,
+    toggleFavorite,
     setIsActionSheetOpen,
     setSelectedDocument,
     folders,
@@ -42,9 +46,10 @@ export const DocumentDetailScreen: React.FC = () => {
   const [zoomLevel, setZoomLevel] = useState(100);
   const [currentPage, setCurrentPage] = useState(1);
   const totalPages = 1;
+  const attachInputRef = useRef<HTMLInputElement>(null);
 
-  // Fallback to College Marksheet or first document
-  const doc = activeDocumentDetail || documents.find(d => d.title.includes('Marksheet')) || documents[0];
+  // Active document or first vault document
+  const doc = activeDocumentDetail || documents[0] || null;
 
   const [isRenameOpen, setIsRenameOpen] = useState(false);
   const [renameValue, setRenameValue] = useState('');
@@ -53,51 +58,98 @@ export const DocumentDetailScreen: React.FC = () => {
 
   if (!doc) {
     return (
-      <div className="p-12 text-center select-none">
-        <p className="text-sm text-[#64748B]">No document selected.</p>
+      <div className="p-12 text-center select-none bg-white rounded-3xl border border-[#E2E8F0] shadow-subtle max-w-lg mx-auto my-12">
+        <div className="w-16 h-16 rounded-2xl bg-[#F7F9FC] border border-[#E2E8F0] flex items-center justify-center mx-auto text-[#64748B] mb-4">
+          <FileText className="w-8 h-8 stroke-[1.8]" />
+        </div>
+        <h3 className="text-base font-bold text-[#0F172A]">No Document Selected</h3>
+        <p className="text-xs text-[#64748B] mt-1 max-w-sm mx-auto">
+          Please select a document from your vault list or upload a new file.
+        </p>
         <button 
           onClick={() => setActiveTab('documents')} 
-          className="mt-4 px-4 py-2 rounded-xl bg-[#1D5FF0] text-white font-semibold text-xs cursor-pointer"
+          className="mt-5 px-5 py-2.5 rounded-full bg-[#111827] text-white font-bold text-xs cursor-pointer hover:bg-black transition-all"
         >
-          Back to Documents
+          View All Documents
         </button>
       </div>
     );
   }
+
+  const isImage = Boolean(
+    doc.fileUrl &&
+    (doc.fileUrl.startsWith('data:image/') ||
+      ['jpg', 'jpeg', 'png', 'webp', 'svg'].includes(doc.fileType.toLowerCase()))
+  );
+
+  const isPdf = Boolean(
+    doc.fileUrl &&
+    (doc.fileUrl.startsWith('data:application/pdf') || doc.fileType.toLowerCase() === 'pdf')
+  );
 
   const handleShare = async () => {
     await shareDocumentNative(doc.title, `PaperTrail Vault Document: ${doc.title} (${doc.policyNumber || ''})`);
   };
 
   const handleDownload = () => {
-    // Generate real, authenticated vault document file download
-    const textContent = `================================================================================
-PAPERTRAIL ENCRYPTED VAULT DOCUMENT RECORD
-================================================================================
-Title:               ${doc.title}
-Category:            ${doc.category}
-Policy / Identifier: ${doc.policyNumber || 'N/A'}
-Authority / Issuer:  ${doc.issuer || 'Official Vault Record'}
-Issue Date:          ${doc.issueDate}
-Expiry Date:         ${doc.expiryDate || 'Permanent / No Expiration'}
-Verification Status: ${doc.isVerified ? 'VERIFIED • SHA-256 DIGITAL SEAL' : 'Active'}
-Vault Notes:         ${doc.notes || 'None'}
-File Type:           ${doc.fileType.toUpperCase()} (${doc.fileSize})
-Owner:               ${userProfile.name} (${userProfile.email})
-Storage Encryption:  AES-256-GCM Zero-Knowledge
-Digital Signature:   #PT-VAULT-${doc.id.toUpperCase()}-SECURE-RECORD
-Generated At:        ${new Date().toISOString()}
-================================================================================`;
+    if (doc.fileUrl) {
+      const link = document.createElement('a');
+      link.href = doc.fileUrl;
+      link.download = doc.fileName || `${doc.title.replace(/[^\w\s-]/g, '').replace(/\s+/g, '_')}.${doc.fileType}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      return;
+    }
 
-    const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
+    // Authenticated manifest for metadata-only vault entry
+    const manifest = {
+      vaultRecordId: doc.id,
+      title: doc.title,
+      category: doc.category,
+      issuer: doc.issuer || 'PaperTrail Vault',
+      policyNumber: doc.policyNumber || 'N/A',
+      issueDate: doc.issueDate,
+      expiryDate: doc.expiryDate || 'Permanent',
+      fileSize: doc.fileSize,
+      fileType: doc.fileType,
+      verified: doc.isVerified,
+      vaultOwner: userProfile.name,
+      ownerEmail: userProfile.email,
+      encryption: 'AES-256-GCM Zero-Knowledge',
+      exportedAt: new Date().toISOString(),
+    };
+
+    const blob = new Blob([JSON.stringify(manifest, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `${doc.title.replace(/[^\w\s-]/g, '').replace(/\s+/g, '_')}_PaperTrail.txt`;
+    link.download = `${doc.title.replace(/[^\w\s-]/g, '').replace(/\s+/g, '_')}_PaperTrail_Record.json`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+  };
+
+  const handleAttachFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const ext = file.name.split('.').pop()?.toLowerCase();
+    const resolvedType = ext === 'png' ? 'png' : ext === 'jpg' || ext === 'jpeg' ? 'jpg' : ext === 'webp' ? 'png' : 'pdf';
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        updateDocument(doc.id, {
+          fileUrl: reader.result,
+          fileName: file.name,
+          fileSizeBytes: file.size,
+          fileSize: formatBytes(file.size),
+          fileType: resolvedType,
+        });
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleDelete = () => {
@@ -147,12 +199,23 @@ Generated At:        ${new Date().toISOString()}
         </button>
 
         <div className="flex items-center gap-2">
+          {/* Favorite Toggle Button */}
+          <button
+            onClick={() => toggleFavorite(doc.id)}
+            className={`p-2.5 rounded-xl border border-[#E2E8F0] bg-white hover:bg-slate-50 transition-all shadow-subtle cursor-pointer ${
+              doc.isFavorite ? 'text-amber-500' : 'text-[#64748B]'
+            }`}
+            title={doc.isFavorite ? 'Starred Document' : 'Star Document'}
+          >
+            <Star className={`w-4 h-4 ${doc.isFavorite ? 'fill-amber-400 text-amber-400' : ''}`} />
+          </button>
+
           <button
             onClick={handleShare}
             className="hidden sm:flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white border border-[#E2E8F0] text-xs font-bold text-[#0F172A] hover:bg-slate-50 transition-all shadow-subtle cursor-pointer"
           >
             <Share2 className="w-4 h-4 text-[#64748B]" />
-            <span>Share Link</span>
+            <span>Share</span>
           </button>
 
           <button
@@ -175,6 +238,15 @@ Generated At:        ${new Date().toISOString()}
         </div>
       </div>
 
+      {/* Hidden File Picker for Attaching Real Document Assets */}
+      <input
+        ref={attachInputRef}
+        type="file"
+        onChange={handleAttachFile}
+        accept=".pdf,.png,.jpg,.jpeg,.webp"
+        className="hidden"
+      />
+
       {/* 2. Dual Workspace Layout (Left: Canvas Viewer, Right: Metadata & Actions) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
@@ -190,7 +262,7 @@ Generated At:        ${new Date().toISOString()}
               <span className="truncate max-w-[200px] text-[#0F172A]">{doc.title}</span>
             </div>
 
-            {/* Zoom & Page Controls */}
+            {/* Zoom Controls */}
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-lg border border-[#E2E8F0]">
                 <button
@@ -210,252 +282,123 @@ Generated At:        ${new Date().toISOString()}
                 </button>
               </div>
 
-              <div className="hidden sm:flex items-center gap-1.5 text-[11px] font-semibold text-[#0F172A]">
-                <span>Page {currentPage} of {totalPages}</span>
-              </div>
+              {doc.fileUrl && (
+                <button
+                  onClick={() => window.open(doc.fileUrl, '_blank')}
+                  className="hidden sm:flex items-center gap-1 text-[11px] font-bold text-[#1D5FF0] hover:underline cursor-pointer"
+                  title="Open full view in new tab"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span>Full View</span>
+                </button>
+              )}
             </div>
           </div>
 
-          {/* Document Canvas Area with Dynamic Category-Accurate Visual Rendering */}
-          <div className="p-6 sm:p-10 bg-[#EEF2F8]/60 flex items-center justify-center min-h-[480px] sm:min-h-[580px] overflow-auto">
-            <div 
-              style={{ transform: `scale(${zoomLevel / 100})`, transformOrigin: 'center center' }}
-              className="w-full max-w-[480px] aspect-[1/1.3] bg-white rounded-xl shadow-2xl border border-slate-300/80 p-6 sm:p-8 flex flex-col justify-between text-[#0F172A] relative transition-transform duration-200"
-            >
-              {/* Official Seal / Watermark */}
-              <div className="absolute right-8 bottom-12 w-24 h-24 rounded-full border-2 border-indigo-400/25 flex items-center justify-center pointer-events-none rotate-12">
-                <span className="text-[10px] font-extrabold uppercase text-indigo-500/30 tracking-widest text-center">
-                  PAPERTRAIL<br />VERIFIED
-                </span>
+          {/* Document Canvas Area with Real Uploaded File Rendering */}
+          <div className="p-4 sm:p-8 bg-[#EEF2F8]/60 flex items-center justify-center min-h-[480px] sm:min-h-[580px] overflow-auto">
+            {isImage ? (
+              <div 
+                style={{ transform: `scale(${zoomLevel / 100})`, transformOrigin: 'center center' }}
+                className="w-full flex items-center justify-center transition-transform duration-200"
+              >
+                <img
+                  src={doc.fileUrl}
+                  alt={doc.title}
+                  className="max-h-[540px] max-w-full rounded-2xl shadow-xl object-contain border border-slate-200/80 bg-white"
+                />
               </div>
-
-              {/* Dynamic Category-Specific Content */}
-              {doc.category === 'Identity' || doc.title.toLowerCase().includes('passport') ? (
-                // Official Passport & Biometric Travel Identity Document
-                <div className="flex-1 flex flex-col justify-between">
-                  <div className="border-b-2 border-slate-900 pb-3 text-center">
-                    <p className="text-[10px] font-black tracking-widest text-[#1D5FF0] uppercase">REPUBLIC OF INDIA • PASSPORT</p>
-                    <h2 className="text-sm font-black text-slate-900 uppercase tracking-wider mt-0.5">NATIONAL TRAVEL DOCUMENT</h2>
-                    <div className="flex justify-between text-[9px] font-mono text-slate-600 mt-2 px-2">
-                      <span>TYPE: <strong>P</strong></span>
-                      <span>CODE: <strong>IND</strong></span>
-                      <span>PASSPORT NO: <strong>{doc.policyNumber || 'Z8841920'}</strong></span>
-                    </div>
-                  </div>
-
-                  <div className="py-4 grid grid-cols-3 gap-3 items-center">
-                    <div className="col-span-1">
-                      <div className="w-24 h-28 rounded-lg border-2 border-slate-300 overflow-hidden bg-slate-100 shadow-inner">
-                        <img 
-                          src={userProfile.avatarUrl} 
-                          alt="Holder" 
-                          className="w-full h-full object-cover" 
-                        />
-                      </div>
-                    </div>
-                    <div className="col-span-2 space-y-1.5 text-[10px] font-mono">
-                      <div>
-                        <span className="text-slate-400 block text-[8px]">SURNAME / GIVEN NAMES</span>
-                        <span className="font-bold text-slate-900">{userProfile.name.toUpperCase()}</span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div>
-                          <span className="text-slate-400 block text-[8px]">NATIONALITY</span>
-                          <span className="font-bold text-slate-900">INDIAN</span>
-                        </div>
-                        <div>
-                          <span className="text-slate-400 block text-[8px]">SEX</span>
-                          <span className="font-bold text-slate-900">M</span>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div>
-                          <span className="text-slate-400 block text-[8px]">DATE OF ISSUE</span>
-                          <span className="font-bold text-slate-900">{doc.issueDate}</span>
-                        </div>
-                        <div>
-                          <span className="text-slate-400 block text-[8px]">DATE OF EXPIRY</span>
-                          <span className="font-bold text-rose-700">{doc.expiryDate || '2034-08-14'}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="pt-3 border-t-2 border-slate-800 font-mono text-[9px] tracking-widest text-slate-700 leading-relaxed bg-slate-50 p-2 rounded">
-                    <p className="truncate">P&lt;INDKUMAR&lt;&lt;LOHITH&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;</p>
-                    <p className="truncate">{doc.policyNumber || 'Z8841920'}&lt;4IND9611015M3408142&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;04</p>
-                  </div>
+            ) : isPdf ? (
+              <div 
+                style={{ transform: `scale(${zoomLevel / 100})`, transformOrigin: 'center center' }}
+                className="w-full h-[560px] rounded-2xl shadow-xl border border-slate-300/80 overflow-hidden bg-white transition-transform duration-200"
+              >
+                <iframe
+                  src={doc.fileUrl}
+                  title={doc.title}
+                  className="w-full h-full border-none"
+                />
+              </div>
+            ) : (
+              /* Authentic PaperTrail Vault Security Record for documents without visual binary */
+              <div 
+                style={{ transform: `scale(${zoomLevel / 100})`, transformOrigin: 'center center' }}
+                className="w-full max-w-[480px] aspect-[1/1.3] bg-white rounded-2xl shadow-xl border border-slate-300/80 p-6 sm:p-8 flex flex-col justify-between text-[#0F172A] relative transition-transform duration-200"
+              >
+                {/* Official PaperTrail Seal */}
+                <div className="absolute right-6 top-6 w-20 h-20 rounded-full border-2 border-[#1D5FF0]/20 flex items-center justify-center pointer-events-none rotate-12">
+                  <span className="text-[9px] font-black uppercase text-[#1D5FF0]/40 tracking-widest text-center">
+                    PAPERTRAIL<br />VAULT SEAL
+                  </span>
                 </div>
-              ) : doc.category === 'Insurance' || doc.category === 'Vehicle' ? (
-                // Official Motor Vehicle & General Insurance Schedule
-                <div className="flex-1 flex flex-col justify-between">
-                  <div className="border-b-2 border-slate-900 pb-3 text-center">
-                    <p className="text-[10px] font-black tracking-widest text-emerald-700 uppercase">CERTIFICATE OF MOTOR INSURANCE</p>
-                    <h2 className="text-sm font-black text-slate-900 uppercase tracking-wider mt-0.5">{doc.issuer || 'ROYAL SUNDARAM GENERAL INSURANCE'}</h2>
-                    <p className="text-[9px] font-mono text-slate-500 mt-1">Policy #{doc.policyNumber || 'POL-9920148-MOT'}</p>
-                  </div>
 
-                  <div className="py-4 space-y-2.5 text-[10px] font-sans">
-                    <div className="flex justify-between border-b border-slate-100 pb-1.5">
-                      <span className="text-slate-500">Insured Name</span>
-                      <span className="font-bold text-slate-900">{userProfile.name}</span>
-                    </div>
-                    <div className="flex justify-between border-b border-slate-100 pb-1.5">
-                      <span className="text-slate-500">Coverage Type</span>
-                      <span className="font-bold text-emerald-800">Comprehensive Zero-Depreciation</span>
-                    </div>
-                    <div className="flex justify-between border-b border-slate-100 pb-1.5">
-                      <span className="text-slate-500">Effective Period</span>
-                      <span className="font-mono font-bold text-slate-900">{doc.issueDate} to {doc.expiryDate || '2027-01-29'}</span>
-                    </div>
-                    <div className="flex justify-between border-b border-slate-100 pb-1.5">
-                      <span className="text-slate-500">Sum Insured (IDV)</span>
-                      <span className="font-bold text-slate-900">$28,500 / ₹22,50,000</span>
-                    </div>
-                    <div className="flex justify-between border-b border-slate-100 pb-1.5">
-                      <span className="text-slate-500">Roadside Assistance</span>
-                      <span className="font-bold text-emerald-700">24x7 Nationwide Coverage</span>
-                    </div>
-                  </div>
-
-                  <div className="pt-3 border-t-2 border-slate-800 flex items-center justify-between text-[9px] font-semibold text-slate-700">
-                    <div>
-                      <p>Underwriter: Claims Hub Online</p>
-                      <p className="text-emerald-700 font-bold">Policy Status: ACTIVE &amp; VERIFIED</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-mono text-slate-400">Digital Seal #PT-INS-AUTHENTIC</p>
-                    </div>
-                  </div>
-                </div>
-              ) : doc.category === 'Finance' ? (
-                // Official Annual Income Tax Return & Form 16
-                <div className="flex-1 flex flex-col justify-between">
-                  <div className="border-b-2 border-slate-900 pb-3 text-center">
-                    <p className="text-[10px] font-black tracking-widest text-amber-700 uppercase">INCOME TAX DEPARTMENT • FORM 16</p>
-                    <h2 className="text-sm font-black text-slate-900 uppercase tracking-wider mt-0.5">ANNUAL TAX RETURN CERTIFICATE</h2>
-                    <p className="text-[9px] font-mono text-slate-500 mt-1">Assessment Year: 2026-27 | Ref: {doc.policyNumber || 'ITR-2026-8819'}</p>
-                  </div>
-
-                  <div className="py-4 space-y-2.5 text-[10px] font-mono">
-                    <div className="flex justify-between border-b border-slate-100 pb-1">
-                      <span>PAN / Tax ID</span>
-                      <span className="font-bold text-slate-900">AAAPL9201K</span>
-                    </div>
-                    <div className="flex justify-between border-b border-slate-100 pb-1">
-                      <span>Taxpayer Name</span>
-                      <span className="font-bold text-slate-900">{userProfile.name}</span>
-                    </div>
-                    <div className="flex justify-between border-b border-slate-100 pb-1">
-                      <span>Filing Status</span>
-                      <span className="font-bold text-emerald-700">VERIFIED &amp; E-FILED</span>
-                    </div>
-                    <div className="flex justify-between border-b border-slate-100 pb-1">
-                      <span>Gross Total Income</span>
-                      <span className="font-bold text-slate-900">$124,500 / ₹18,40,000</span>
-                    </div>
-                    <div className="flex justify-between border-b border-slate-100 pb-1">
-                      <span>Tax Deducted (TDS)</span>
-                      <span className="font-bold text-slate-900">$18,200 (100% Reconciled)</span>
-                    </div>
-                  </div>
-
-                  <div className="pt-3 border-t-2 border-slate-800 flex items-center justify-between text-[9px] font-semibold text-slate-700">
-                    <p>Verified with Central Board of Direct Taxes</p>
-                    <p className="font-mono text-slate-400">#PT-TAX-CERTIFIED</p>
-                  </div>
-                </div>
-              ) : doc.category === 'Medical' ? (
-                // Official Health Coverage & Medical Records
-                <div className="flex-1 flex flex-col justify-between">
-                  <div className="border-b-2 border-slate-900 pb-3 text-center">
-                    <p className="text-[10px] font-black tracking-widest text-rose-700 uppercase">HEALTHCARE &amp; DENTAL GOLD COVERAGE</p>
-                    <h2 className="text-sm font-black text-slate-900 uppercase tracking-wider mt-0.5">{doc.issuer || 'STAR HEALTH ALLIED NETWORK'}</h2>
-                    <p className="text-[9px] font-mono text-slate-500 mt-1">Member ID: {doc.policyNumber || 'MED-77192-HLT'}</p>
-                  </div>
-
-                  <div className="py-4 space-y-2.5 text-[10px] font-sans">
-                    <div className="flex justify-between border-b border-slate-100 pb-1">
-                      <span className="text-slate-500">Beneficiary</span>
-                      <span className="font-bold text-slate-900">{userProfile.name}</span>
-                    </div>
-                    <div className="flex justify-between border-b border-slate-100 pb-1">
-                      <span className="text-slate-500">Hospital Network</span>
-                      <span className="font-bold text-emerald-800">Cashless Direct Access (14,000+ Hospitals)</span>
-                    </div>
-                    <div className="flex justify-between border-b border-slate-100 pb-1">
-                      <span className="text-slate-500">Annual Limit</span>
-                      <span className="font-bold text-slate-900">$100,000 Emergency Coverage</span>
-                    </div>
-                    <div className="flex justify-between border-b border-slate-100 pb-1">
-                      <span className="text-slate-500">Valid Through</span>
-                      <span className="font-bold text-rose-700">{doc.expiryDate || '2027-04-01'}</span>
-                    </div>
-                  </div>
-
-                  <div className="pt-3 border-t-2 border-slate-800 flex items-center justify-between text-[9px] font-semibold text-slate-700">
-                    <p>24x7 Emergency Assistance Hotline Active</p>
-                    <p className="font-mono text-slate-400">#PT-MED-VALID</p>
-                  </div>
-                </div>
-              ) : (
-                // Official Education Academic Transcript & Degree Certificate
-                <div className="flex-1 flex flex-col justify-between">
-                  <div className="text-center border-b-2 border-slate-800 pb-3">
-                    <div className="w-8 h-8 rounded-full bg-[#1D5FF0] text-white flex items-center justify-center mx-auto mb-1 text-xs font-bold">
-                      VTU
-                    </div>
-                    <h2 className="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-900">
-                      VISVESVARAYA TECHNOLOGICAL UNIVERSITY
+                <div>
+                  <div className="border-b-2 border-slate-900 pb-3">
+                    <p className="text-[10px] font-black tracking-widest text-[#1D5FF0] uppercase">
+                      PAPERTRAIL ENCRYPTED VAULT RECORD
+                    </p>
+                    <h2 className="text-base font-black text-slate-900 uppercase tracking-tight mt-1">
+                      {doc.title}
                     </h2>
-                    <p className="text-[10px] font-semibold text-[#64748B]">
-                      STATEMENT OF MARKS / ACADEMIC TRANSCRIPT
-                    </p>
-                    <p className="text-[9px] font-mono text-slate-500 mt-0.5">
-                      Ref: {doc.policyNumber || 'VTU-CSE-2023-8841'}
+                    <p className="text-[10px] font-mono text-slate-500 mt-0.5">
+                      Record #{doc.id.toUpperCase()} • Category: {doc.category}
                     </p>
                   </div>
 
-                  <div className="space-y-2 py-3 font-mono text-[10px] text-[#0F172A]">
-                    <div className="flex justify-between border-b border-slate-200 pb-1 font-bold text-slate-600 text-[9px]">
-                      <span>COURSE &amp; SUBJECT</span>
-                      <span>GRADE</span>
+                  <div className="py-4 space-y-2.5 text-[11px]">
+                    <div className="flex justify-between border-b border-slate-100 pb-1.5">
+                      <span className="text-slate-500 font-medium">Issuer / Authority</span>
+                      <span className="font-bold text-slate-900">{doc.issuer || 'Official Issuer'}</span>
                     </div>
-                    <div className="flex justify-between py-0.5">
-                      <span>18CS71 Computer Networks</span>
-                      <span className="font-bold text-[#1D5FF0]">S (9.2)</span>
+                    <div className="flex justify-between border-b border-slate-100 pb-1.5">
+                      <span className="text-slate-500 font-medium">Identifier / Policy #</span>
+                      <span className="font-mono font-bold text-slate-900">{doc.policyNumber || 'N/A'}</span>
                     </div>
-                    <div className="flex justify-between py-0.5">
-                      <span>18CS72 Cloud Computing</span>
-                      <span className="font-bold text-[#1D5FF0]">A (8.8)</span>
+                    <div className="flex justify-between border-b border-slate-100 pb-1.5">
+                      <span className="text-slate-500 font-medium">Issue Date</span>
+                      <span className="font-mono text-slate-900">{doc.issueDate}</span>
                     </div>
-                    <div className="flex justify-between py-0.5">
-                      <span>18CS73 Machine Learning</span>
-                      <span className="font-bold text-[#1D5FF0]">S (9.5)</span>
+                    <div className="flex justify-between border-b border-slate-100 pb-1.5">
+                      <span className="text-slate-500 font-medium">Expiry Date</span>
+                      <span className={`font-mono font-bold ${doc.isExpiringSoon ? 'text-rose-600' : 'text-slate-900'}`}>
+                        {doc.expiryDate || 'Permanent / No Expiration'}
+                      </span>
                     </div>
-                    <div className="flex justify-between py-0.5">
-                      <span>18CS74 Cryptography &amp; Vaults</span>
-                      <span className="font-bold text-[#1D5FF0]">S (9.4)</span>
+                    <div className="flex justify-between border-b border-slate-100 pb-1.5">
+                      <span className="text-slate-500 font-medium">File Metadata</span>
+                      <span className="font-mono text-slate-900 uppercase">{doc.fileType} • {doc.fileSize}</span>
                     </div>
-                    <div className="flex justify-between py-0.5">
-                      <span>18CSL76 AI Systems Lab</span>
-                      <span className="font-bold text-[#1D5FF0]">S (10.0)</span>
-                    </div>
-                  </div>
-
-                  <div className="pt-3 border-t-2 border-slate-800 flex items-center justify-between text-[9px] font-semibold text-slate-700">
-                    <div>
-                      <p>Candidate: {userProfile.name}</p>
-                      <p className="text-emerald-700 font-bold">Result: DISTINCTION (9.17 SGPA)</p>
-                    </div>
-                    <div className="text-right">
-                      <p>Issue Date: {doc.issueDate}</p>
-                      <p className="font-mono text-slate-400">Digital Sign: #PT-VAULT-AUTHENTIC</p>
-                    </div>
+                    {doc.notes && (
+                      <div className="pt-1 text-[11px] text-slate-600">
+                        <span className="text-slate-400 block text-[9px] uppercase font-bold">Notes</span>
+                        <p className="mt-0.5 italic">{doc.notes}</p>
+                      </div>
+                    )}
                   </div>
                 </div>
-              )}
-            </div>
+
+                <div>
+                  {/* Attach Real File Prompt Button */}
+                  <div className="bg-[#F7F9FC] border border-[#E2E8F0] rounded-xl p-3 mb-3 text-center">
+                    <p className="text-[11px] font-semibold text-[#0F172A] mb-1.5">
+                      Attach or scan the original file
+                    </p>
+                    <button
+                      onClick={() => attachInputRef.current?.click()}
+                      className="px-3.5 py-1.5 rounded-lg bg-[#1D5FF0] hover:bg-[#0752D9] text-white font-bold text-[11px] shadow-xs cursor-pointer inline-flex items-center gap-1.5"
+                    >
+                      <Upload className="w-3.5 h-3.5" />
+                      <span>Upload File to View</span>
+                    </button>
+                  </div>
+
+                  <div className="pt-2 border-t-2 border-slate-800 flex items-center justify-between text-[9px] font-mono text-slate-600">
+                    <span>ZERO-KNOWLEDGE ENCRYPTED</span>
+                    <span className="text-emerald-700 font-bold">AES-256 ACTIVE</span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
         </div>

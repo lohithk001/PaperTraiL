@@ -8,7 +8,8 @@ import {
   FilterType,
   FolderItem,
   SharedDocumentItem,
-  DocumentCategory
+  DocumentCategory,
+  ReminderPreferences
 } from '../types';
 import { 
   INITIAL_DOCUMENTS, 
@@ -18,6 +19,50 @@ import {
   INITIAL_FOLDERS,
   INITIAL_SHARED_DOCUMENTS
 } from '../data/mockData';
+import { apiClient } from '../services/apiService';
+
+export function formatBytes(bytes: number): string {
+  if (!bytes || bytes <= 0) return '0 KB';
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+}
+
+export function parseFileSizeToBytes(sizeStr?: string): number {
+  if (!sizeStr) return 0;
+  const match = sizeStr.match(/([\d.]+)\s*(B|KB|MB|GB)?/i);
+  if (!match) return 0;
+  const val = parseFloat(match[1]);
+  const unit = (match[2] || 'MB').toUpperCase();
+  if (unit === 'GB') return val * 1024 * 1024 * 1024;
+  if (unit === 'MB') return val * 1024 * 1024;
+  if (unit === 'KB') return val * 1024;
+  return val;
+}
+
+export interface StorageCategoryBreakdown {
+  category: DocumentCategory;
+  bytes: number;
+  sizeFormatted: string;
+  count: number;
+  percent: number;
+  color: string;
+}
+
+export interface StorageStats {
+  totalBytes: number;
+  totalMb: number;
+  quotaBytes: number;
+  quotaMb: number;
+  usedFormatted: string;
+  quotaFormatted: string;
+  percentUsed: number;
+  remainingBytes: number;
+  remainingMb: number;
+  remainingFormatted: string;
+  categoryBreakdown: StorageCategoryBreakdown[];
+}
 
 interface DocumentContextType {
   documents: DocumentItem[];
@@ -26,6 +71,7 @@ interface DocumentContextType {
   userProfile: UserProfile;
   folders: FolderItem[];
   sharedDocuments: SharedDocumentItem[];
+  storageStats: StorageStats;
   activeTab: TabScreen;
   setActiveTab: (tab: TabScreen) => void;
   filter: FilterType;
@@ -67,6 +113,11 @@ interface DocumentContextType {
   markNotificationRead: (id: string) => void;
   markAllNotificationsRead: () => void;
   updateUserProfile: (updates: Partial<UserProfile>) => void;
+  saveOnboardingStep: (step: number) => Promise<void>;
+  saveOnboardingCategories: (categories: string[]) => Promise<void>;
+  saveOnboardingPreferences: (prefs: ReminderPreferences) => Promise<void>;
+  saveOnboardingProfile: (data: { name: string; avatarUrl?: string; preferredLanguage?: string }) => Promise<void>;
+  completeOnboardingJourney: () => Promise<void>;
   filteredDocuments: DocumentItem[];
   heroDocument: DocumentItem | null;
   stackedDocuments: DocumentItem[];
@@ -81,23 +132,34 @@ interface DocumentContextType {
 const DocumentContext = createContext<DocumentContextType | undefined>(undefined);
 
 const STORAGE_KEYS = {
-  DOCUMENTS: 'papertrail_documents_v1',
-  REMINDERS: 'papertrail_reminders_v1',
-  NOTIFICATIONS: 'papertrail_notifications_v1',
-  PROFILE: 'papertrail_profile_v1',
+  DOCUMENTS: 'papertrail_vault_documents_v2',
+  REMINDERS: 'papertrail_vault_reminders_v2',
+  NOTIFICATIONS: 'papertrail_vault_notifications_v2',
+  PROFILE: 'papertrail_vault_profile_v2',
   DEVICE_MODE: 'papertrail_device_mode_v1',
-  FOLDERS: 'papertrail_folders_v1',
-  SHARED: 'papertrail_shared_v1',
+  FOLDERS: 'papertrail_vault_folders_v2',
+  SHARED: 'papertrail_vault_shared_v2',
 };
 
 export const DocumentProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Load from localStorage or use initial mock data
+  // Load real documents from localStorage (strictly clean of any legacy mock data)
   const [documents, setDocuments] = useState<DocumentItem[]>(() => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEYS.DOCUMENTS);
-      return saved ? JSON.parse(saved) : INITIAL_DOCUMENTS;
+      const saved = localStorage.getItem(STORAGE_KEYS.DOCUMENTS) || localStorage.getItem('papertrail_documents_v1');
+      if (!saved) return [];
+      const parsed: DocumentItem[] = JSON.parse(saved);
+      // Strip any simulated or fake document fixtures
+      return parsed.filter(d => 
+        !d.id.startsWith('doc-hero') && 
+        !d.id.startsWith('doc-id-') && 
+        !d.id.startsWith('doc-edu-') && 
+        !d.id.startsWith('doc-fin-') && 
+        !d.id.startsWith('doc-ins-') && 
+        !d.id.startsWith('doc-med-') && 
+        !d.id.startsWith('doc-war-')
+      );
     } catch {
-      return INITIAL_DOCUMENTS;
+      return [];
     }
   });
 
@@ -113,40 +175,53 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [sharedDocuments, setSharedDocuments] = useState<SharedDocumentItem[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEYS.SHARED);
-      return saved ? JSON.parse(saved) : INITIAL_SHARED_DOCUMENTS;
+      return saved ? JSON.parse(saved) : [];
     } catch {
-      return INITIAL_SHARED_DOCUMENTS;
+      return [];
     }
   });
 
   const [reminders, setReminders] = useState<ReminderItem[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEYS.REMINDERS);
-      return saved ? JSON.parse(saved) : INITIAL_REMINDERS;
+      return saved ? JSON.parse(saved) : [];
     } catch {
-      return INITIAL_REMINDERS;
+      return [];
     }
   });
 
   const [notifications, setNotifications] = useState<NotificationItem[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEYS.NOTIFICATIONS);
-      return saved ? JSON.parse(saved) : INITIAL_NOTIFICATIONS;
+      return saved ? JSON.parse(saved) : [];
     } catch {
-      return INITIAL_NOTIFICATIONS;
+      return [];
     }
   });
 
   const [userProfile, setUserProfile] = useState<UserProfile>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEYS.PROFILE);
-      return saved ? JSON.parse(saved) : INITIAL_USER_PROFILE;
+      return saved ? { ...INITIAL_USER_PROFILE, ...JSON.parse(saved) } : INITIAL_USER_PROFILE;
     } catch {
       return INITIAL_USER_PROFILE;
     }
   });
 
-  const [activeTab, setActiveTab] = useState<TabScreen>('home');
+  const [activeTab, setActiveTab] = useState<TabScreen>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.PROFILE);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.onboardingCompleted) {
+          return 'home';
+        }
+      }
+      return 'onboarding';
+    } catch {
+      return 'onboarding';
+    }
+  });
   const [filter, setFilter] = useState<FilterType>('all');
   const [selectedDocument, setSelectedDocument] = useState<DocumentItem | null>(null);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
@@ -223,6 +298,71 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     localStorage.setItem(STORAGE_KEYS.DEVICE_MODE, deviceViewMode);
   }, [deviceViewMode]);
 
+  // Dynamic Storage Calculation derived strictly from real uploaded documents
+  const storageStats = useMemo<StorageStats>(() => {
+    let totalBytes = 0;
+    const catMap: Record<string, { bytes: number; count: number; color: string }> = {
+      'Identity': { bytes: 0, count: 0, color: '#1D5FF0' },
+      'Insurance': { bytes: 0, count: 0, color: '#10B981' },
+      'Finance': { bytes: 0, count: 0, color: '#F59E0B' },
+      'Education': { bytes: 0, count: 0, color: '#8B5CF6' },
+      'Medical': { bytes: 0, count: 0, color: '#EC4899' },
+      'Warranty': { bytes: 0, count: 0, color: '#6366F1' },
+      'Vehicle': { bytes: 0, count: 0, color: '#06B6D4' },
+    };
+
+    documents.forEach((d) => {
+      const bytes = d.fileSizeBytes || parseFileSizeToBytes(d.fileSize);
+      totalBytes += bytes;
+      const catKey = catMap[d.category] ? d.category : 'Identity';
+      catMap[catKey].bytes += bytes;
+      catMap[catKey].count += 1;
+    });
+
+    const quotaBytes = 500 * 1024 * 1024; // 500 MB Free Tier Quota
+    const quotaMb = 500;
+    const totalMb = totalBytes / (1024 * 1024);
+    const percentUsed = totalBytes > 0 ? Number(((totalBytes / quotaBytes) * 100).toFixed(2)) : 0;
+    const remainingBytes = Math.max(0, quotaBytes - totalBytes);
+    const remainingMb = Math.max(0, quotaMb - totalMb);
+
+    const categoryBreakdown: StorageCategoryBreakdown[] = Object.entries(catMap)
+      .filter(([_, data]) => data.count > 0)
+      .map(([name, data]) => ({
+        category: name as DocumentCategory,
+        bytes: data.bytes,
+        sizeFormatted: formatBytes(data.bytes),
+        count: data.count,
+        percent: totalBytes > 0 ? Math.round((data.bytes / totalBytes) * 100) : 0,
+        color: data.color,
+      }));
+
+    return {
+      totalBytes,
+      totalMb,
+      quotaBytes,
+      quotaMb,
+      usedFormatted: formatBytes(totalBytes),
+      quotaFormatted: '500 MB',
+      percentUsed,
+      remainingBytes,
+      remainingMb,
+      remainingFormatted: formatBytes(remainingBytes),
+      categoryBreakdown,
+    };
+  }, [documents]);
+
+  // Synchronize profile stats automatically with actual vault documents & storage
+  useEffect(() => {
+    setUserProfile(prev => ({
+      ...prev,
+      documentsCount: documents.length,
+      storageUsed: storageStats.usedFormatted,
+      storageTotal: storageStats.quotaFormatted,
+      storageUsedPercent: storageStats.percentUsed,
+    }));
+  }, [documents.length, storageStats]);
+
   // Document Counts
   const counts = useMemo(() => {
     return {
@@ -282,6 +422,24 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     };
     setDocuments(prev => [newDoc, ...prev]);
     setUserProfile(prev => ({ ...prev, documentsCount: prev.documentsCount + 1 }));
+
+    // Automatically generate lifecycle reminder if an expiry date is specified
+    if (newDoc.expiryDate) {
+      const diffMs = new Date(newDoc.expiryDate).getTime() - Date.now();
+      const diffDays = Math.max(1, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+      const newReminder: ReminderItem = {
+        id: `rem-${Date.now()}`,
+        documentId: newDoc.id,
+        documentTitle: newDoc.title,
+        title: `${newDoc.title} Expiration`,
+        dueDate: newDoc.expiryDate,
+        daysLeft: diffDays,
+        urgency: diffDays <= 15 ? 'critical' : diffDays <= 45 ? 'warning' : 'normal',
+        isCompleted: false,
+        category: newDoc.category,
+      };
+      setReminders(prev => [newReminder, ...prev]);
+    }
 
     // Add notification
     const newNotif: NotificationItem = {
@@ -469,6 +627,78 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setUserProfile(prev => ({ ...prev, ...updates }));
   };
 
+  const saveOnboardingStep = async (step: number) => {
+    setUserProfile(prev => ({ ...prev, onboardingStep: step }));
+    try {
+      await apiClient.updateOnboardingState({ step });
+    } catch (e) {
+      console.warn('[PaperTrail] Could not persist onboarding step to backend:', e);
+    }
+  };
+
+  const saveOnboardingCategories = async (categories: string[]) => {
+    setUserProfile(prev => ({ ...prev, selectedDocumentCategories: categories }));
+    try {
+      await apiClient.updateOnboardingState({ selectedCategories: categories });
+    } catch (e) {
+      console.warn('[PaperTrail] Could not persist categories to backend:', e);
+    }
+  };
+
+  const saveOnboardingPreferences = async (prefs: ReminderPreferences) => {
+    setUserProfile(prev => ({ ...prev, reminderPreferences: prefs }));
+    try {
+      await apiClient.updateOnboardingState({ reminderPreferences: prefs });
+    } catch (e) {
+      console.warn('[PaperTrail] Could not persist reminder preferences to backend:', e);
+    }
+  };
+
+  const saveOnboardingProfile = async (data: { name: string; avatarUrl?: string; preferredLanguage?: string }) => {
+    setUserProfile(prev => ({
+      ...prev,
+      name: data.name,
+      avatarUrl: data.avatarUrl !== undefined ? data.avatarUrl : prev.avatarUrl,
+      preferredLanguage: data.preferredLanguage !== undefined ? data.preferredLanguage : prev.preferredLanguage,
+    }));
+    try {
+      await apiClient.updateOnboardingState({
+        displayName: data.name,
+        avatarUrl: data.avatarUrl,
+        preferredLanguage: data.preferredLanguage,
+      });
+    } catch (e) {
+      console.warn('[PaperTrail] Could not persist profile to backend:', e);
+    }
+  };
+
+  const completeOnboardingJourney = async () => {
+    setUserProfile(prev => ({
+      ...prev,
+      onboardingCompleted: true,
+      onboardingStep: 6,
+    }));
+    try {
+      await apiClient.completeOnboarding();
+    } catch (e) {
+      console.warn('[PaperTrail] Could not mark onboarding completed in backend:', e);
+    }
+    setActiveTab('home');
+  };
+
+  // Derive folder counts and sizes dynamically from real documents in the vault
+  const dynamicFolders = useMemo<FolderItem[]>(() => {
+    return folders.map(f => {
+      const docsInCat = documents.filter(d => d.category === f.category);
+      const catBytes = docsInCat.reduce((acc, d) => acc + (d.fileSizeBytes || parseFileSizeToBytes(d.fileSize)), 0);
+      return {
+        ...f,
+        documentCount: docsInCat.length,
+        totalSize: formatBytes(catBytes),
+      };
+    });
+  }, [folders, documents]);
+
   return (
     <DocumentContext.Provider
       value={{
@@ -476,8 +706,9 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         reminders,
         notifications,
         userProfile,
-        folders,
+        folders: dynamicFolders,
         sharedDocuments,
+        storageStats,
         activeTab,
         setActiveTab,
         filter,
@@ -519,6 +750,11 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         markNotificationRead,
         markAllNotificationsRead,
         updateUserProfile,
+        saveOnboardingStep,
+        saveOnboardingCategories,
+        saveOnboardingPreferences,
+        saveOnboardingProfile,
+        completeOnboardingJourney,
         filteredDocuments,
         heroDocument,
         stackedDocuments,

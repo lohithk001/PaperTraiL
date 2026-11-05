@@ -27,6 +27,7 @@ import { DocumentCategory, DocumentItem } from '../types';
 export const BentoHomeScreen: React.FC = () => {
   const { 
     documents, 
+    userProfile,
     setActiveDocumentDetail, 
     setActiveTab, 
     setSelectedCategory,
@@ -172,7 +173,56 @@ export const BentoHomeScreen: React.FC = () => {
         </div>
 
         {/* 4. The 2x2 Bento Cards Grid dynamically driven by real vault documents */}
-        {primaryCards.length === 0 ? (
+        {documents.length === 0 ? (
+          <div className="p-8 sm:p-10 bg-white rounded-3xl border border-[#EBE4DA] shadow-card text-center max-w-2xl mx-auto my-4 space-y-4">
+            <div className="w-16 h-16 rounded-3xl bg-blue-50 text-[#1D5FF0] border border-blue-100 flex items-center justify-center mx-auto shadow-2xs">
+              <Sparkles className="w-8 h-8 stroke-[2.2]" />
+            </div>
+            
+            <div className="space-y-1">
+              <h3 className="text-xl font-extrabold text-[#111827] tracking-tight font-display">
+                Welcome to your secure vault{userProfile.name ? `, ${userProfile.name.split(' ')[0]}` : ''}!
+              </h3>
+              <p className="text-xs sm:text-sm text-[#78716C] max-w-md mx-auto leading-relaxed">
+                Your sovereign document archive is ready. Upload your first document to enable automatic expiration tracking and smart categorization.
+              </p>
+            </div>
+
+            {/* Quick-action category chips from onboarding */}
+            {userProfile.selectedDocumentCategories && userProfile.selectedDocumentCategories.length > 0 && (
+              <div className="pt-2">
+                <span className="text-[11px] font-bold text-[#A8A29E] uppercase tracking-wider block mb-2">
+                  Recommended first documents from your setup:
+                </span>
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                  {userProfile.selectedDocumentCategories.map((catName) => (
+                    <button
+                      key={catName}
+                      onClick={() => {
+                        setSelectedCategory(catName);
+                        setIsUploadModalOpen(true);
+                      }}
+                      className="px-3.5 py-1.5 rounded-full bg-[#FAF7F2] hover:bg-[#F2ECE2] border border-[#E8DFD3] text-xs font-bold text-[#111827] transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs active:scale-95"
+                    >
+                      <Plus className="w-3.5 h-3.5 text-[#1D5FF0]" />
+                      <span>Add {catName}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="pt-2">
+              <button
+                onClick={() => setIsUploadModalOpen(true)}
+                className="px-6 py-3 rounded-2xl bg-[#1D5FF0] hover:bg-[#1650D8] active:scale-[0.98] text-white text-xs font-bold shadow-card transition-all inline-flex items-center gap-2 cursor-pointer"
+              >
+                <Plus className="w-4 h-4 stroke-[2.5]" />
+                <span>Upload your first document</span>
+              </button>
+            </div>
+          </div>
+        ) : primaryCards.length === 0 ? (
           <div className="p-8 bg-white rounded-3xl border border-[#EBE4DA] text-center">
             <p className="text-sm font-bold text-[#111827]">No documents found in {activeCategory}</p>
             <p className="text-xs text-[#78716C] mt-1">Upload a document to securely store and protect it in this vault category.</p>
@@ -273,43 +323,59 @@ export const BentoHomeScreen: React.FC = () => {
         </div>
 
         {/* Horizontal Card Carousel or Compact Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
-          {filteredDocs.slice(0, 3).map((doc, idx) => (
-            <motion.div
-              key={doc.id}
-              whileHover={{ y: -2 }}
-              onClick={() => handleOpenDoc(doc)}
-              className="bg-white rounded-2xl p-4 border border-[#EBE4DA] hover:border-slate-300 shadow-2xs hover:shadow-xs transition-all cursor-pointer flex flex-col justify-between"
+        {filteredDocs.length === 0 ? (
+          <div className="p-8 bg-white rounded-2xl border border-[#EBE4DA] text-center">
+            <p className="text-sm font-bold text-[#111827]">Vault is ready for documents</p>
+            <p className="text-xs text-[#78716C] mt-1">
+              Store IDs, insurance, marksheets and vehicle documents with zero-knowledge security.
+            </p>
+            <button
+              onClick={() => setIsUploadModalOpen(true)}
+              className="mt-4 px-4 py-2 rounded-full bg-[#111827] text-white text-xs font-bold cursor-pointer hover:bg-black transition-all inline-flex items-center gap-1.5"
             >
-              <div className="flex items-start justify-between gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#F5EFE6] flex items-center justify-center text-[#111827] shrink-0 font-bold text-xs uppercase">
-                  {doc.fileType}
+              <Plus className="w-3.5 h-3.5" />
+              <span>Add First Document</span>
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+            {filteredDocs.slice(0, 3).map((doc) => (
+              <motion.div
+                key={doc.id}
+                whileHover={{ y: -2 }}
+                onClick={() => handleOpenDoc(doc)}
+                className="bg-white rounded-2xl p-4 border border-[#EBE4DA] hover:border-slate-300 shadow-2xs hover:shadow-xs transition-all cursor-pointer flex flex-col justify-between"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#F5EFE6] flex items-center justify-center text-[#111827] shrink-0 font-bold text-xs uppercase">
+                    {doc.fileType}
+                  </div>
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#FAF7F2] text-[#57534E] border border-[#EBE4DA]">
+                    {doc.category}
+                  </span>
                 </div>
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#FAF7F2] text-[#57534E] border border-[#EBE4DA]">
-                  {doc.category}
-                </span>
-              </div>
 
-              <div className="my-3">
-                <h4 className="text-xs sm:text-sm font-bold text-[#111827] truncate">
-                  {doc.title}
-                </h4>
-                <p className="text-[11px] text-[#78716C] mt-0.5 truncate">
-                  {doc.issuer} • {doc.fileSize}
-                </p>
-              </div>
+                <div className="my-3">
+                  <h4 className="text-xs sm:text-sm font-bold text-[#111827] truncate">
+                    {doc.title}
+                  </h4>
+                  <p className="text-[11px] text-[#78716C] mt-0.5 truncate">
+                    {doc.issuer} • {doc.fileSize}
+                  </p>
+                </div>
 
-              <div className="pt-2.5 border-t border-[#F5EFE6] flex items-center justify-between text-xs font-semibold text-[#111827]">
-                <span className="text-[11px] text-[#78716C]">
-                  {doc.expiryDate ? `Exp: ${doc.expiryDate}` : 'No Expiry'}
-                </span>
-                <span className="text-xs font-bold text-[#1D5FF0] flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
-                  View <ChevronRight className="w-3 h-3" />
-                </span>
-              </div>
-            </motion.div>
-          ))}
-        </div>
+                <div className="pt-2.5 border-t border-[#F5EFE6] flex items-center justify-between text-xs font-semibold text-[#111827]">
+                  <span className="text-[11px] text-[#78716C]">
+                    {doc.expiryDate ? `Exp: ${doc.expiryDate}` : 'No Expiry'}
+                  </span>
+                  <span className="text-xs font-bold text-[#1D5FF0] flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
+                    View <ChevronRight className="w-3 h-3" />
+                  </span>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
       </div>
 
     </div>

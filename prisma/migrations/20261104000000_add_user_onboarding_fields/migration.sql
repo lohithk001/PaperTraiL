@@ -1,0 +1,6 @@
+-- AlterTable
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "onboardingCompleted" BOOLEAN NOT NULL DEFAULT false,
+ADD COLUMN IF NOT EXISTS "onboardingStep" INTEGER NOT NULL DEFAULT 1,
+ADD COLUMN IF NOT EXISTS "selectedDocumentCategories" TEXT[] DEFAULT ARRAY[]::TEXT[],
+ADD COLUMN IF NOT EXISTS "reminderPreferences" JSONB,
+ADD COLUMN IF NOT EXISTS "preferredLanguage" TEXT DEFAULT 'en';

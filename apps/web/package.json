@@ -23,6 +23,7 @@
     "@capacitor/share": "^8.0.3",
     "@capacitor/splash-screen": "^8.0.2",
     "@capacitor/status-bar": "^8.0.4",
+    "@clerk/clerk-react": "^5.61.11",
     "@papertrail/api-client": "workspace:*",
     "@papertrail/contracts": "workspace:*",
     "@papertrail/design-tokens": "workspace:*",

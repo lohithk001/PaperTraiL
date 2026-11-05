@@ -10,31 +10,76 @@ import {
   ChevronRight, 
   LogOut, 
   Download, 
-  Sparkles,
-  Key,
-  Smartphone,
-  CheckCircle2,
-  Lock,
-  X
+  Sparkles, 
+  Key, 
+  Smartphone, 
+  CheckCircle2, 
+  Lock, 
+  X,
+  Globe,
+  FolderArchive,
+  Check,
+  RotateCcw
 } from 'lucide-react';
 import { useDocumentContext } from '../context/DocumentContext';
 import { triggerConfetti } from '../components/Confetti';
+import { useVaultAuth } from '../auth/ClerkAuthProvider';
+import { ReminderPreferences } from '../types';
+
+const CATEGORIES_LIST = [
+  'Identity',
+  'Education',
+  'Finance',
+  'Insurance',
+  'Health',
+  'Bills and receipts',
+  'Warranties',
+  'Other documents',
+];
+
+const PREFERRED_LANGUAGES = [
+  { code: 'en', label: 'English (US & International)', flag: '🌐' },
+  { code: 'es', label: 'Español (Spanish)', flag: '🇪🇸' },
+  { code: 'fr', label: 'Français (French)', flag: '🇫🇷' },
+  { code: 'de', label: 'Deutsch (German)', flag: '🇩🇪' },
+  { code: 'hi', label: 'हिन्दी (Hindi)', flag: '🇮🇳' },
+  { code: 'ja', label: '日本語 (Japanese)', flag: '🇯🇵' },
+];
 
 export const SettingsScreen: React.FC = () => {
   const { 
     userProfile, 
     updateUserProfile,
+    saveOnboardingPreferences,
+    saveOnboardingCategories,
+    saveOnboardingProfile,
+    saveOnboardingStep,
     documents, 
     reminders,
+    storageStats,
     setActiveTab 
   } = useDocumentContext();
+  const { signOut } = useVaultAuth();
+
+  const handleLogout = async () => {
+    if (confirm('Lock vault and sign out of your session?')) {
+      await signOut();
+    }
+  };
 
   const [activeModal, setActiveModal] = useState<string | null>(null);
   const [nameInput, setNameInput] = useState(userProfile.name);
   const [emailInput, setEmailInput] = useState(userProfile.email);
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const [emailAlertsEnabled, setEmailAlertsEnabled] = useState(true);
-  const [biometricsEnabled, setBiometricsEnabled] = useState(userProfile.biometricEnabled);
+  const [selectedLanguage, setSelectedLanguage] = useState(userProfile.preferredLanguage || 'en');
+  const [selectedCats, setSelectedCats] = useState<string[]>(userProfile.selectedDocumentCategories || []);
+  const [reminderPrefs, setReminderPrefs] = useState<ReminderPreferences>(
+    userProfile.reminderPreferences || {
+      documentExpiry: true,
+      warrantyExpiry: true,
+      insuranceRenewal: true,
+      billPayment: true,
+    }
+  );
 
   const handleExportBackup = () => {
     const backupData = {
@@ -59,7 +104,32 @@ export const SettingsScreen: React.FC = () => {
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();
     updateUserProfile({ name: nameInput, email: emailInput });
+    saveOnboardingProfile({ name: nameInput, preferredLanguage: selectedLanguage });
     setActiveModal(null);
+  };
+
+  const handleSaveReminderPrefs = async () => {
+    await saveOnboardingPreferences(reminderPrefs);
+    setActiveModal(null);
+  };
+
+  const handleSaveCategories = async () => {
+    await saveOnboardingCategories(selectedCats);
+    await saveOnboardingProfile({ name: userProfile.name, preferredLanguage: selectedLanguage });
+    setActiveModal(null);
+  };
+
+  const handleRelaunchOnboarding = async () => {
+    if (confirm('Would you like to review the PaperTrail onboarding journey? Your documents will remain safe.')) {
+      await saveOnboardingStep(1);
+      setActiveTab('onboarding');
+    }
+  };
+
+  const toggleCategory = (cat: string) => {
+    setSelectedCats(prev => 
+      prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]
+    );
   };
 
   return (
@@ -71,7 +141,7 @@ export const SettingsScreen: React.FC = () => {
           Vault Settings
         </h1>
         <p className="text-xs sm:text-sm font-medium text-[#78716C] mt-1">
-          Personal profile, vault encryption, storage allocation, and device sync.
+          Personal profile, vault encryption, storage allocation, and onboarding preferences.
         </p>
       </div>
 
@@ -90,27 +160,30 @@ export const SettingsScreen: React.FC = () => {
               className="w-full h-full object-cover"
             />
           </div>
-
           <div>
-            <h2 className="text-base sm:text-lg font-bold text-[#0F172A] group-hover:text-[#1D5FF0] transition-colors">
-              {userProfile.name}
-            </h2>
-            <p className="text-xs text-[#64748B] mt-0.5">
-              {userProfile.email}
+            <div className="flex items-center gap-2">
+              <h2 className="text-base sm:text-lg font-bold text-[#0F172A] group-hover:text-[#1D5FF0] transition-colors">
+                {userProfile.name}
+              </h2>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                Active Vault
+              </span>
+            </div>
+            <p className="text-xs text-[#64748B] mt-0.5 font-medium">{userProfile.email || 'No email attached'}</p>
+            <p className="text-[11px] text-[#94A3B8] mt-1 font-mono">
+              Language: {userProfile.preferredLanguage?.toUpperCase() || 'EN'} • {userProfile.selectedDocumentCategories?.length || 0} Categories
             </p>
-            <span className="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200">
-              Verified Vault Owner
-            </span>
           </div>
         </div>
 
-        <button className="px-3.5 py-1.5 rounded-xl bg-[#F7F9FC] text-xs font-bold text-[#1D5FF0] group-hover:bg-[#EAF1FF] transition-colors">
-          Edit Profile
-        </button>
+        <div className="flex items-center gap-2 text-xs font-bold text-[#1D5FF0]">
+          <span className="hidden sm:inline">Edit Profile</span>
+          <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+        </div>
       </motion.div>
 
-      {/* 3. Settings Sections Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* 3. Settings Bento Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         
         {/* Storage Card */}
         <div 
@@ -119,19 +192,23 @@ export const SettingsScreen: React.FC = () => {
         >
           <div>
             <div className="flex items-center justify-between mb-3">
-              <div className="w-10 h-10 rounded-xl bg-[#EAF1FF] text-[#1D5FF0] flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#1D5FF0] flex items-center justify-center">
                 <HardDrive className="w-5 h-5 stroke-[2.2]" />
               </div>
-              <span className="text-xs font-bold text-[#1D5FF0]">72% used</span>
+              <span className="text-xs font-bold text-[#1D5FF0]">{storageStats.percentUsed}% Quota</span>
             </div>
             <h3 className="text-sm font-bold text-[#0F172A] group-hover:text-[#1D5FF0] transition-colors">
-              Storage Usage
+              Vault Storage
             </h3>
             <p className="text-xs text-[#64748B] mt-1">
-              {userProfile.storageUsed} of {userProfile.storageTotal} used across PDFs, images and scans.
+              {storageStats.usedFormatted} of {storageStats.quotaFormatted} used across Cloudflare R2 vaults.
             </p>
-            <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden mt-3">
-              <div className="h-full bg-[#1D5FF0] rounded-full w-[72%]"></div>
+            
+            <div className="w-full bg-slate-100 h-2 rounded-full mt-3 overflow-hidden">
+              <div 
+                className="h-full bg-[#1D5FF0] rounded-full transition-all duration-500" 
+                style={{ width: `${Math.min(100, Math.max(0, storageStats.percentUsed))}%` }}
+              ></div>
             </div>
           </div>
           <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-[#1D5FF0]">
@@ -153,19 +230,19 @@ export const SettingsScreen: React.FC = () => {
               <span className="text-xs font-bold text-emerald-600">AES-256 Active</span>
             </div>
             <h3 className="text-sm font-bold text-[#0F172A] group-hover:text-[#1D5FF0] transition-colors">
-              Vault Security & Biometrics
+              Vault Security & Architecture
             </h3>
             <p className="text-xs text-[#64748B] mt-1">
-              Zero-knowledge encryption keys and biometric app unlock on Android devices.
+              Private isolated R2 buckets, Clerk JWT verification, and encrypted rest/transit data.
             </p>
           </div>
           <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-[#1D5FF0]">
-            <span>Security Settings</span>
+            <span>Security Architecture</span>
             <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
           </div>
         </div>
 
-        {/* Notifications Card */}
+        {/* Notifications & Expiry Alerts Card */}
         <div 
           onClick={() => setActiveModal('notifications')}
           className="bg-white rounded-3xl p-5 border border-[#E2E8F0] shadow-subtle hover:border-[#1D5FF0]/40 transition-all cursor-pointer group flex flex-col justify-between"
@@ -175,17 +252,42 @@ export const SettingsScreen: React.FC = () => {
               <div className="w-10 h-10 rounded-xl bg-[#FFF2E6] text-[#F5A623] flex items-center justify-center">
                 <Bell className="w-5 h-5 stroke-[2.2]" />
               </div>
-              <span className="text-xs font-bold text-[#F5A623]">Alerts On</span>
+              <span className="text-xs font-bold text-[#F5A623]">Alerts Configured</span>
             </div>
             <h3 className="text-sm font-bold text-[#0F172A] group-hover:text-[#1D5FF0] transition-colors">
-              Notifications & Expiry Alerts
+              Reminder Preferences
             </h3>
             <p className="text-xs text-[#64748B] mt-1">
-              Manage automatic reminder timelines (30 days, 15 days, 3 days).
+              Manage automatic alerts for passports, insurance policies, warranties, and bills.
             </p>
           </div>
           <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-[#1D5FF0]">
-            <span>Configure Alerts</span>
+            <span>Configure Reminders</span>
+            <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+          </div>
+        </div>
+
+        {/* Onboarding & Categories Preferences Card */}
+        <div 
+          onClick={() => setActiveModal('categories')}
+          className="bg-white rounded-3xl p-5 border border-[#E2E8F0] shadow-subtle hover:border-[#1D5FF0]/40 transition-all cursor-pointer group flex flex-col justify-between"
+        >
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-10 h-10 rounded-xl bg-purple-50 text-[#8B5CF6] flex items-center justify-center">
+                <FolderArchive className="w-5 h-5 stroke-[2.2]" />
+              </div>
+              <span className="text-xs font-bold text-[#8B5CF6]">{userProfile.selectedDocumentCategories?.length || 0} Active</span>
+            </div>
+            <h3 className="text-sm font-bold text-[#0F172A] group-hover:text-[#1D5FF0] transition-colors">
+              Categories & Language
+            </h3>
+            <p className="text-xs text-[#64748B] mt-1">
+              Update preferred document categories and vault language formatting.
+            </p>
+          </div>
+          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-[#1D5FF0]">
+            <span>Edit Categories</span>
             <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
           </div>
         </div>
@@ -215,6 +317,31 @@ export const SettingsScreen: React.FC = () => {
           </div>
         </div>
 
+        {/* Review Onboarding Guide Card */}
+        <div 
+          onClick={handleRelaunchOnboarding}
+          className="bg-white rounded-3xl p-5 border border-[#E2E8F0] shadow-subtle hover:border-[#1D5FF0]/40 transition-all cursor-pointer group flex flex-col justify-between"
+        >
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#1D5FF0] flex items-center justify-center">
+                <Sparkles className="w-5 h-5 stroke-[2.2]" />
+              </div>
+              <span className="text-xs font-bold text-[#1D5FF0]">Guide</span>
+            </div>
+            <h3 className="text-sm font-bold text-[#0F172A] group-hover:text-[#1D5FF0] transition-colors">
+              Review Onboarding Guide
+            </h3>
+            <p className="text-xs text-[#64748B] mt-1">
+              Re-open the multi-step PaperTrail vault onboarding walkthrough.
+            </p>
+          </div>
+          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-[#1D5FF0]">
+            <span>Relaunch Journey</span>
+            <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+          </div>
+        </div>
+
       </div>
 
       {/* 4. Vault Backup & About PaperTrail */}
@@ -222,7 +349,7 @@ export const SettingsScreen: React.FC = () => {
         <div>
           <h3 className="text-sm font-bold text-[#0F172A]">Export Encrypted Vault Backup</h3>
           <p className="text-xs text-[#64748B] mt-0.5">
-            Download an offline JSON snapshot of your 24 documents and reminders metadata.
+            Download an offline JSON snapshot of your {documents.length} vault documents and reminders metadata.
           </p>
         </div>
 
@@ -234,6 +361,28 @@ export const SettingsScreen: React.FC = () => {
           <span>Export Backup</span>
         </button>
       </div>
+
+      {/* 5. Session & Vault Lock */}
+      <div className="bg-white rounded-3xl p-5 sm:p-6 border border-rose-100/80 shadow-subtle flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h3 className="text-sm font-bold text-rose-600">Lock Vault & Sign Out</h3>
+          <p className="text-xs text-[#64748B] mt-0.5">
+            Safely terminate your active session and flush cached local credentials.
+          </p>
+        </div>
+
+        <button
+          onClick={handleLogout}
+          className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-600 text-xs font-bold transition-all shadow-subtle cursor-pointer self-start sm:self-auto"
+        >
+          <LogOut className="w-4 h-4 text-rose-600" />
+          <span>Lock & Sign Out</span>
+        </button>
+      </div>
+
+      {/* ─────────────────────────────────────────────────────────────
+          MODALS
+      ───────────────────────────────────────────────────────────── */}
 
       {/* Profile Edit Modal */}
       <AnimatePresence>
@@ -253,7 +402,7 @@ export const SettingsScreen: React.FC = () => {
                 <button 
                   type="button" 
                   onClick={() => setActiveModal(null)}
-                  className="p-1 rounded-full text-[#64748B] hover:text-[#0F172A]"
+                  className="p-1 rounded-full text-[#64748B] hover:text-[#0F172A] cursor-pointer"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -281,11 +430,24 @@ export const SettingsScreen: React.FC = () => {
                 />
               </div>
 
+              <div>
+                <label className="text-xs font-bold text-[#0F172A]">Preferred Language</label>
+                <select
+                  value={selectedLanguage}
+                  onChange={(e) => setSelectedLanguage(e.target.value)}
+                  className="w-full mt-1.5 h-11 px-4 rounded-xl bg-[#F7F9FC] border border-[#E2E8F0] text-xs font-semibold text-[#0F172A] focus:outline-none focus:border-[#1D5FF0] focus:bg-white cursor-pointer"
+                >
+                  {PREFERRED_LANGUAGES.map((l) => (
+                    <option key={l.code} value={l.code}>{l.flag} {l.label}</option>
+                  ))}
+                </select>
+              </div>
+
               <div className="flex items-center justify-end gap-2 pt-2">
                 <button
                   type="button"
                   onClick={() => setActiveModal(null)}
-                  className="px-4 py-2 rounded-xl text-xs font-bold text-[#64748B] hover:bg-slate-100"
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-[#64748B] hover:bg-slate-100 cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -301,7 +463,7 @@ export const SettingsScreen: React.FC = () => {
         )}
       </AnimatePresence>
 
-      {/* Security Settings Modal */}
+      {/* Security Architecture Modal */}
       <AnimatePresence>
         {activeModal === 'security' && (
           <motion.div
@@ -312,36 +474,44 @@ export const SettingsScreen: React.FC = () => {
           >
             <div className="w-full max-w-md bg-white rounded-3xl p-6 border border-[#E2E8F0] shadow-2xl space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-base font-bold text-[#0F172A]">Vault Security & Encryption</h3>
+                <div className="flex items-center gap-2">
+                  <Shield className="w-5 h-5 text-emerald-600" />
+                  <h3 className="text-base font-bold text-[#0F172A]">Verified Security Architecture</h3>
+                </div>
                 <button 
                   onClick={() => setActiveModal(null)}
-                  className="p-1 rounded-full text-[#64748B] hover:text-[#0F172A]"
+                  className="p-1 rounded-full text-[#64748B] hover:text-[#0F172A] cursor-pointer"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
-              <div className="space-y-3">
-                <div className="flex items-center justify-between p-3.5 rounded-2xl bg-[#F7F9FC] border border-[#E2E8F0]">
-                  <div>
-                    <p className="text-xs font-bold text-[#0F172A]">Biometric App Lock</p>
-                    <p className="text-[11px] text-[#64748B]">Unlock with fingerprint or face recognition</p>
-                  </div>
-                  <input 
-                    type="checkbox" 
-                    checked={biometricsEnabled} 
-                    onChange={(e) => setBiometricsEnabled(e.target.checked)} 
-                    className="w-4 h-4 text-[#1D5FF0] rounded cursor-pointer"
-                  />
+              <div className="space-y-3 text-left">
+                <div className="p-3.5 rounded-2xl bg-[#F7F9FC] border border-[#E2E8F0]">
+                  <p className="text-xs font-bold text-[#0F172A]">Private Cloudflare R2 Storage</p>
+                  <p className="text-[11px] text-[#64748B] mt-0.5">
+                    User files isolated under scoped storage paths with zero public bucket listing.
+                  </p>
                 </div>
 
-                <div className="p-3.5 rounded-2xl bg-[#E8F6EF] border border-[#27A879]/30 text-xs">
-                  <div className="flex items-center gap-2 font-bold text-[#27A879]">
-                    <Shield className="w-4 h-4" />
-                    AES-256 Envelope Encryption Active
-                  </div>
-                  <p className="text-[#64748B] text-[11px] mt-1">
-                    Every document is encrypted with a distinct master data key before being stored on Cloudflare R2 / Neon PostgreSQL.
+                <div className="p-3.5 rounded-2xl bg-[#F7F9FC] border border-[#E2E8F0]">
+                  <p className="text-xs font-bold text-[#0F172A]">Clerk Session Tokens & Row Authorization</p>
+                  <p className="text-[11px] text-[#64748B] mt-0.5">
+                    Every API request validates JWT sessions; database queries strictly verify owner IDs.
+                  </p>
+                </div>
+
+                <div className="p-3.5 rounded-2xl bg-[#F7F9FC] border border-[#E2E8F0]">
+                  <p className="text-xs font-bold text-[#0F172A]">AES-256 at Rest & TLS 1.3 in Transit</p>
+                  <p className="text-[11px] text-[#64748B] mt-0.5">
+                    Storage volumes use AES-256 server-side encryption; all network endpoints enforce TLS 1.3.
+                  </p>
+                </div>
+
+                <div className="p-3.5 rounded-2xl bg-[#F7F9FC] border border-[#E2E8F0]">
+                  <p className="text-xs font-bold text-[#0F172A]">Ephemeral Presigned URLs</p>
+                  <p className="text-[11px] text-[#64748B] mt-0.5">
+                    Upload URLs expire in 15 minutes; download URLs expire in 1 hour.
                   </p>
                 </div>
               </div>
@@ -359,7 +529,7 @@ export const SettingsScreen: React.FC = () => {
         )}
       </AnimatePresence>
 
-      {/* Notifications Modal */}
+      {/* Reminder Preferences Modal */}
       <AnimatePresence>
         {activeModal === 'notifications' && (
           <motion.div
@@ -370,50 +540,153 @@ export const SettingsScreen: React.FC = () => {
           >
             <div className="w-full max-w-md bg-white rounded-3xl p-6 border border-[#E2E8F0] shadow-2xl space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-base font-bold text-[#0F172A]">Notification Preferences</h3>
+                <div className="flex items-center gap-2">
+                  <Bell className="w-5 h-5 text-[#1D5FF0]" />
+                  <h3 className="text-base font-bold text-[#0F172A]">Reminder Preferences</h3>
+                </div>
                 <button 
                   onClick={() => setActiveModal(null)}
-                  className="p-1 rounded-full text-[#64748B] hover:text-[#0F172A]"
+                  className="p-1 rounded-full text-[#64748B] hover:text-[#0F172A] cursor-pointer"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
-              <div className="space-y-3">
-                <div className="flex items-center justify-between p-3.5 rounded-2xl bg-[#F7F9FC] border border-[#E2E8F0]">
-                  <div>
-                    <p className="text-xs font-bold text-[#0F172A]">Expiry Reminders</p>
-                    <p className="text-[11px] text-[#64748B]">Push notifications 30, 15, and 3 days before expiry</p>
-                  </div>
-                  <input 
-                    type="checkbox" 
-                    checked={notificationsEnabled} 
-                    onChange={(e) => setNotificationsEnabled(e.target.checked)} 
-                    className="w-4 h-4 text-[#1D5FF0] rounded cursor-pointer"
-                  />
-                </div>
+              <p className="text-xs text-[#64748B]">
+                Configure which automatic lifecycle reminders PaperTrail will generate for your documents:
+              </p>
 
-                <div className="flex items-center justify-between p-3.5 rounded-2xl bg-[#F7F9FC] border border-[#E2E8F0]">
-                  <div>
-                    <p className="text-xs font-bold text-[#0F172A]">Email Digest</p>
-                    <p className="text-[11px] text-[#64748B]">Monthly vault summary sent to {userProfile.email}</p>
+              <div className="space-y-2.5">
+                {[
+                  { key: 'documentExpiry' as const, label: 'Document Expiry Reminders', desc: 'Passports, IDs, and driver’s licenses' },
+                  { key: 'insuranceRenewal' as const, label: 'Insurance Renewal Reminders', desc: 'Motor, health, and property cover' },
+                  { key: 'warrantyExpiry' as const, label: 'Warranty Expiry Reminders', desc: 'Appliances and electronic devices' },
+                  { key: 'billPayment' as const, label: 'Bill Payment Reminders', desc: 'Recurring bills, taxes, and utility dues' },
+                ].map((item) => (
+                  <div key={item.key} className="flex items-center justify-between p-3 rounded-2xl bg-[#F7F9FC] border border-[#E2E8F0]">
+                    <div>
+                      <p className="text-xs font-bold text-[#0F172A]">{item.label}</p>
+                      <p className="text-[11px] text-[#64748B]">{item.desc}</p>
+                    </div>
+                    <input 
+                      type="checkbox" 
+                      checked={reminderPrefs[item.key]} 
+                      onChange={(e) => setReminderPrefs(prev => ({ ...prev, [item.key]: e.target.checked }))} 
+                      className="w-4 h-4 text-[#1D5FF0] rounded cursor-pointer"
+                    />
                   </div>
-                  <input 
-                    type="checkbox" 
-                    checked={emailAlertsEnabled} 
-                    onChange={(e) => setEmailAlertsEnabled(e.target.checked)} 
-                    className="w-4 h-4 text-[#1D5FF0] rounded cursor-pointer"
-                  />
-                </div>
+                ))}
               </div>
 
-              <div className="flex justify-end pt-2">
+              <div className="flex justify-end gap-2 pt-2">
                 <button
+                  type="button"
                   onClick={() => setActiveModal(null)}
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-[#64748B] hover:bg-slate-100 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveReminderPrefs}
                   className="px-5 py-2.5 rounded-xl bg-[#1D5FF0] text-white font-bold text-xs shadow-card hover:bg-[#0752D9] cursor-pointer"
                 >
                   Save Preferences
                 </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Categories & Language Preferences Modal */}
+      <AnimatePresence>
+        {activeModal === 'categories' && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs"
+          >
+            <div className="w-full max-w-lg bg-white rounded-3xl p-6 border border-[#E2E8F0] shadow-2xl space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <FolderArchive className="w-5 h-5 text-purple-600" />
+                  <h3 className="text-base font-bold text-[#0F172A]">Document Categories & Language</h3>
+                </div>
+                <button 
+                  onClick={() => setActiveModal(null)}
+                  className="p-1 rounded-full text-[#64748B] hover:text-[#0F172A] cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-[#0F172A] block mb-1.5">Preferred Language</label>
+                <select
+                  value={selectedLanguage}
+                  onChange={(e) => setSelectedLanguage(e.target.value)}
+                  className="w-full h-10 px-3 rounded-xl bg-[#F7F9FC] border border-[#E2E8F0] text-xs font-semibold text-[#0F172A] focus:outline-none focus:border-[#1D5FF0] cursor-pointer"
+                >
+                  {PREFERRED_LANGUAGES.map((l) => (
+                    <option key={l.code} value={l.code}>{l.flag} {l.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-[#0F172A] block mb-2">
+                  Selected Vault Categories ({selectedCats.length} active)
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  {CATEGORIES_LIST.map((cat) => {
+                    const isSelected = selectedCats.includes(cat);
+
+                    return (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={() => toggleCategory(cat)}
+                        className={`p-2.5 rounded-xl border text-xs font-bold flex items-center justify-between transition-all cursor-pointer ${
+                          isSelected
+                            ? 'bg-purple-50/80 border-purple-300 text-purple-900'
+                            : 'bg-white border-[#E2E8F0] text-[#64748B] hover:bg-slate-50'
+                        }`}
+                      >
+                        <span>{cat}</span>
+                        {isSelected && <Check className="w-3.5 h-3.5 text-purple-700 stroke-[3]" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={handleRelaunchOnboarding}
+                  className="text-xs font-bold text-[#1D5FF0] hover:underline flex items-center gap-1 cursor-pointer"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>Review full onboarding</span>
+                </button>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setActiveModal(null)}
+                    className="px-4 py-2 rounded-xl text-xs font-bold text-[#64748B] hover:bg-slate-100 cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSaveCategories}
+                    className="px-5 py-2.5 rounded-xl bg-[#1D5FF0] text-white font-bold text-xs shadow-card hover:bg-[#0752D9] cursor-pointer"
+                  >
+                    Save Changes
+                  </button>
+                </div>
               </div>
             </div>
           </motion.div>

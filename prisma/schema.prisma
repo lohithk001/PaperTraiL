@@ -40,6 +40,11 @@ model User {
   storageQuotaBytes  BigInt         @default(524288000) // 500 MB default quota
   encryptionEnabled  Boolean        @default(true)
   biometricEnabled   Boolean        @default(true)
+  onboardingCompleted Boolean        @default(false)
+  onboardingStep     Int            @default(1)
+  selectedDocumentCategories String[] @default([])
+  reminderPreferences Json?
+  preferredLanguage  String?        @default("en")
   createdAt          DateTime       @default(now())
   updatedAt          DateTime       @updatedAt
 

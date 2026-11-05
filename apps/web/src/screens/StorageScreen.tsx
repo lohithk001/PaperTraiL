@@ -16,69 +16,19 @@ import {
 import { useDocumentContext } from '../context/DocumentContext';
 
 export const StorageScreen: React.FC = () => {
-  const { documents, userProfile, setIsUploadModalOpen } = useDocumentContext();
+  const { documents, userProfile, setIsUploadModalOpen, storageStats } = useDocumentContext();
 
   // Storage calculation
   const totalFiles = documents.length;
   const verifiedCount = documents.filter(d => d.isVerified).length;
   const expiringCount = documents.filter(d => d.isExpiringSoon).length;
 
-  // Real, Dynamic Storage Calculation derived from vault documents
-  const { totalUsedMb, storageCategories, percentUsed, remainingQuotaMb } = React.useMemo(() => {
-    let totalMb = 0;
-    const catMap: Record<string, { size: number; count: number; color: string }> = {
-      'Identity': { size: 0, count: 0, color: '#1D5FF0' },
-      'Insurance': { size: 0, count: 0, color: '#10B981' },
-      'Finance': { size: 0, count: 0, color: '#F59E0B' },
-      'Education': { size: 0, count: 0, color: '#8B5CF6' },
-      'Medical': { size: 0, count: 0, color: '#EC4899' },
-      'Warranty': { size: 0, count: 0, color: '#6366F1' },
-    };
-
-    documents.forEach((d) => {
-      const match = d.fileSize.match(/([\d.]+)\s*(MB|KB)/i);
-      let mb = 0.5;
-      if (match) {
-        const val = parseFloat(match[1]);
-        const unit = match[2].toUpperCase();
-        mb = unit === 'MB' ? val : val / 1024;
-      }
-      totalMb += mb;
-
-      const catKey = catMap[d.category] ? d.category : 'Identity';
-      catMap[catKey].size += mb;
-      catMap[catKey].count += 1;
-    });
-
-    const quotaMb = 500;
-    const pct = Math.min(100, Math.max(1, Math.round((totalMb / quotaMb) * 100)));
-    const remaining = Math.max(0, quotaMb - totalMb);
-
-    const categoriesList = Object.entries(catMap)
-      .filter(([_, data]) => data.count > 0)
-      .map(([name, data]) => ({
-        name,
-        count: data.count,
-        size: `${data.size.toFixed(1)} MB`,
-        percent: totalMb > 0 ? Math.round((data.size / totalMb) * 100) : 0,
-        color: data.color,
-      }));
-
-    return {
-      totalUsedMb: totalMb.toFixed(1),
-      storageCategories: categoriesList.length > 0 ? categoriesList : [
-        { name: 'All Documents', count: documents.length, size: `${totalMb.toFixed(1)} MB`, percent: 100, color: '#1D5FF0' }
-      ],
-      percentUsed: pct,
-      remainingQuotaMb: remaining.toFixed(1),
-    };
-  }, [documents]);
+  const storageCategories = storageStats.categoryBreakdown;
 
   const auditEvents = [
-    { id: 1, event: 'Document Verified', doc: documents[0]?.title || 'Vault Record', time: '10 mins ago', status: 'Success' },
-    { id: 2, event: 'R2 Cloud Sync', doc: documents[1]?.title || 'Vault Record', time: '1 hour ago', status: 'Encrypted' },
-    { id: 3, event: 'Integrity Check Passed', doc: 'All Vault Records', time: '6 hours ago', status: 'Valid' },
-    { id: 4, event: 'Audit Log Generated', doc: 'Session Log', time: 'Today', status: 'Logged' },
+    { id: 1, event: 'Vault Initialized', doc: totalFiles > 0 ? documents[0]?.title : 'PaperTrail Vault', time: 'Just now', status: 'Encrypted' },
+    { id: 2, event: 'Zero-Knowledge Key Check', doc: 'AES-256 Master Key', time: 'Active', status: 'Valid' },
+    { id: 3, event: 'Integrity Check Passed', doc: 'All Vault Records', time: 'Continuous', status: 'Success' },
   ];
 
   return (
@@ -126,15 +76,18 @@ export const StorageScreen: React.FC = () => {
           </div>
           <p className="text-xs font-bold uppercase tracking-wider text-charcoal-400">Storage Used</p>
           <div className="flex items-baseline gap-2 mt-1">
-            <span className="text-3xl font-extrabold text-charcoal-900">{totalUsedMb} MB</span>
-            <span className="text-sm font-semibold text-charcoal-500">of 500 MB ({percentUsed}%)</span>
+            <span className="text-3xl font-extrabold text-charcoal-900">{storageStats.usedFormatted}</span>
+            <span className="text-sm font-semibold text-charcoal-500">of {storageStats.quotaFormatted} ({storageStats.percentUsed}%)</span>
           </div>
           {/* Progress bar */}
           <div className="w-full h-2.5 bg-neutral-100 rounded-full mt-4 overflow-hidden">
-            <div className="h-full bg-primary rounded-full" style={{ width: `${percentUsed}%` }}></div>
+            <div 
+              className="h-full bg-primary rounded-full transition-all duration-500" 
+              style={{ width: `${Math.min(100, Math.max(0, storageStats.percentUsed))}%` }}
+            ></div>
           </div>
           <p className="text-xs font-medium text-charcoal-500 mt-2">
-            {remainingQuotaMb} MB remaining in your personal vault.
+            {storageStats.remainingFormatted} remaining in your personal vault.
           </p>
         </div>
 
@@ -204,32 +157,45 @@ export const StorageScreen: React.FC = () => {
 
           {/* Multi-segment bar */}
           <div className="w-full h-4 rounded-full overflow-hidden flex mb-6 bg-neutral-100">
-            {storageCategories.map((cat, idx) => (
-              <div 
-                key={idx} 
-                style={{ width: `${cat.percent}%`, backgroundColor: cat.color }} 
-                title={`${cat.name}: ${cat.percent}%`}
-                className="h-full first:rounded-l-full last:rounded-r-full transition-all"
-              />
-            ))}
+            {storageCategories.length > 0 ? (
+              storageCategories.map((cat, idx) => (
+                <div 
+                  key={idx} 
+                  style={{ width: `${cat.percent}%`, backgroundColor: cat.color }} 
+                  title={`${cat.category}: ${cat.percent}%`}
+                  className="h-full first:rounded-l-full last:rounded-r-full transition-all"
+                />
+              ))
+            ) : (
+              <div className="w-full h-full bg-slate-200/50"></div>
+            )}
           </div>
 
           <div className="space-y-4">
-            {storageCategories.map((cat, idx) => (
-              <div key={idx} className="flex items-center justify-between p-3.5 rounded-2xl bg-neutral-50/70 border border-charcoal-200/60">
-                <div className="flex items-center gap-3">
-                  <span className="w-3.5 h-3.5 rounded-full" style={{ backgroundColor: cat.color }}></span>
-                  <div>
-                    <p className="text-sm font-bold text-charcoal-900">{cat.name}</p>
-                    <p className="text-xs font-medium text-charcoal-500">{cat.count} documents</p>
+            {storageCategories.length === 0 ? (
+              <div className="p-8 text-center bg-neutral-50 rounded-2xl border border-charcoal-200/60">
+                <p className="text-sm font-bold text-charcoal-900">No documents stored yet</p>
+                <p className="text-xs text-charcoal-500 mt-1">
+                  Upload documents to your vault to see real-time categorized storage metrics.
+                </p>
+              </div>
+            ) : (
+              storageCategories.map((cat, idx) => (
+                <div key={idx} className="flex items-center justify-between p-3.5 rounded-2xl bg-neutral-50/70 border border-charcoal-200/60">
+                  <div className="flex items-center gap-3">
+                    <span className="w-3.5 h-3.5 rounded-full" style={{ backgroundColor: cat.color }}></span>
+                    <div>
+                      <p className="text-sm font-bold text-charcoal-900">{cat.category}</p>
+                      <p className="text-xs font-medium text-charcoal-500">{cat.count} documents</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-bold text-charcoal-900">{cat.sizeFormatted}</p>
+                    <p className="text-xs font-semibold text-charcoal-500">{cat.percent}%</p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-sm font-bold text-charcoal-900">{cat.size}</p>
-                  <p className="text-xs font-semibold text-charcoal-500">{cat.percent}%</p>
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
 

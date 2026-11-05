@@ -9,12 +9,19 @@ import {
   FileText,
   ShieldAlert
 } from 'lucide-react';
-import { useDocumentContext } from '../context/DocumentContext';
+import { useDocumentContext, formatBytes } from '../context/DocumentContext';
 import { DocumentCategory } from '../types';
 import { triggerConfetti } from './Confetti';
 
 export const UploadModal: React.FC = () => {
-  const { isUploadModalOpen, setIsUploadModalOpen, addDocument, setSelectedDocument } = useDocumentContext();
+  const { 
+    isUploadModalOpen, 
+    setIsUploadModalOpen, 
+    addDocument, 
+    setSelectedDocument,
+    setActiveDocumentDetail,
+    setActiveTab
+  } = useDocumentContext();
 
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<DocumentCategory>('Insurance');
@@ -24,7 +31,10 @@ export const UploadModal: React.FC = () => {
   const [notes, setNotes] = useState('');
   const [tagInput, setTagInput] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [fileSizeStr, setFileSizeStr] = useState('1.5 MB');
+  const [fileUrl, setFileUrl] = useState<string>('');
+  const [fileSizeBytes, setFileSizeBytes] = useState<number>(0);
+  const [fileName, setFileName] = useState<string>('');
+  const [fileSizeStr, setFileSizeStr] = useState('');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -34,11 +44,19 @@ export const UploadModal: React.FC = () => {
     const file = e.target.files?.[0];
     if (file) {
       setSelectedFile(file);
+      setFileName(file.name);
+      setFileSizeBytes(file.size);
+      setFileSizeStr(formatBytes(file.size));
       if (!title) {
-        setTitle(file.name.replace(/\.[^/.]+$/, ''));
+        setTitle(file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' '));
       }
-      const mb = (file.size / (1024 * 1024)).toFixed(1);
-      setFileSizeStr(`${mb} MB`);
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === 'string') {
+          setFileUrl(reader.result);
+        }
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -59,17 +77,24 @@ export const UploadModal: React.FC = () => {
       ? tagInput.split(',').map((t) => t.trim()).filter(Boolean)
       : [category, 'Encrypted'];
 
+    const ext = selectedFile?.name.split('.').pop()?.toLowerCase();
+    const resolvedType = ext === 'png' ? 'png' : ext === 'jpg' || ext === 'jpeg' ? 'jpg' : ext === 'webp' ? 'png' : 'pdf';
+    const resolvedSize = fileSizeStr || (selectedFile ? formatBytes(selectedFile.size) : '0 KB');
+
     const newDoc = addDocument({
       title,
       category,
-      fileType: selectedFile?.name.endsWith('.png') ? 'png' : selectedFile?.name.endsWith('.jpg') ? 'jpg' : 'pdf',
-      fileSize: fileSizeStr,
+      fileType: resolvedType,
+      fileName: fileName || selectedFile?.name || `${title}.${resolvedType}`,
+      fileUrl: fileUrl || undefined,
+      fileSizeBytes: fileSizeBytes || (selectedFile ? selectedFile.size : 0),
+      fileSize: resolvedSize,
       issueDate: new Date().toISOString().split('T')[0],
       expiryDate: expiryDate || null,
       daysLeft,
       isExpiringSoon,
       isVerified: true,
-      issuer: issuer || 'Official Issuer',
+      issuer: issuer || 'Official Vault Record',
       policyNumber: policyNumber || `DOC-${Math.floor(100000 + Math.random() * 900000)}`,
       notes,
       tags,
@@ -81,6 +106,7 @@ export const UploadModal: React.FC = () => {
     triggerConfetti();
     setIsUploadModalOpen(false);
     setSelectedDocument(newDoc);
+    setActiveDocumentDetail(newDoc);
   };
 
   return (
