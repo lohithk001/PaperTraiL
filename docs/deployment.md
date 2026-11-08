@@ -1,117 +1,131 @@
-# PaperTrail — Production Deployment Guide
+# PaperTrail — Production Deployment Runbook
 
-This guide covers deployment instructions for all three PaperTrail applications and their supporting infrastructure.
-
----
-
-## 1. Infrastructure Requirements
-
-1. **Database**: [Neon Serverless PostgreSQL](https://neon.tech/)
-2. **Object Storage**: [Cloudflare R2](https://www.cloudflare.com/products/r2/) (S3-compatible API)
-3. **Authentication**: [Clerk](https://clerk.com/)
-4. **Backend Hosting**: [Railway](https://railway.app/), Render, or AWS ECS
-5. **Web Hosting**: [Vercel](https://vercel.com/) or Cloudflare Pages
-6. **Mobile Builds**: [Capacitor](https://capacitorjs.com/) & Android Studio / Gradle
-7. **Email Delivery**: [Resend](https://resend.com/)
+**Environment:** Production Multi-Cloud  
+**Target Hosts:** Vercel (Frontend) • Railway / Render (Backend) • Neon (Database) • Google Play (Mobile)  
 
 ---
 
-## 2. Cloudflare R2 Bucket Configuration
+## 1. Production Architecture Matrix
 
-1. Create a private R2 bucket named `papertrail-vault`.
-2. Generate an **R2 API Token** with `Object Read & Write` permissions.
-3. Configure the **CORS Policy** in the Cloudflare Dashboard to permit direct client uploads:
+| Service Tier | Production Provider | Region | Protocol |
+| :--- | :--- | :--- | :--- |
+| **Frontend Web** | [Vercel](https://vercel.com/) | Global Edge CDN | HTTPS / HTTP/3 |
+| **Backend API** | [Railway](https://railway.app/) / Render | AWS `us-east` | HTTPS / TLS 1.3 |
+| **Database** | [Neon Serverless PostgreSQL](https://neon.tech/) | AWS `us-east-2` | Pooled Postgres (5432) |
+| **Authentication** | [Clerk](https://clerk.com/) | Global | OAuth 2.0 / JWT |
+| **Mobile App** | Google Play Store (Capacitor 8) | Global | Native Android APK / AAB |
 
+---
+
+## 2. Database Setup: Neon PostgreSQL
+
+1. **Create a Production Project** on [Neon Console](https://console.neon.tech).
+2. **Retrieve the Connection Pooler String:**
+   Ensure you select the **Pooled connection** string (contains `-pooler`):
+   ```
+   postgresql://<username>:<password>@ep-muddy-forest-beeyuukm-pooler.c-9.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+   ```
+3. **Execute Production Schema Deployment:**
+   From your local development machine or CI pipeline:
+   ```bash
+   pnpm --filter @papertrail/api prisma:push
+   ```
+   Or for migration histories:
+   ```bash
+   npx prisma migrate deploy
+   ```
+
+---
+
+## 3. Backend API Deployment (`apps/api`)
+
+Deploy as a containerized Node.js service on Railway, Render, or AWS ECS:
+
+### Build & Start Configurations
+* **Root Directory:** `.` (Monorepo root)
+* **Build Command:**
+  ```bash
+  pnpm install && pnpm --filter @papertrail/contracts build && pnpm --filter @papertrail/api build
+  ```
+* **Start Command:**
+  ```bash
+  node apps/api/dist/main.js
+  ```
+* **Port:** Injected via `$PORT` environment variable (defaults to `8000`).
+
+### Production Environment Variables Checklist
+```env
+NODE_ENV=production
+PORT=8000
+DATABASE_URL="postgresql://<user>:<pass>@ep-pooler.c-9.us-east-2.aws.neon.tech/neondb?sslmode=require"
+VAULT_MASTER_KEY="<generate-random-high-entropy-64-character-hex-string>"
+CLERK_SECRET_KEY="sk_live_..."
+CLERK_PUBLISHABLE_KEY="pk_live_..."
+FRONTEND_URL="https://papertrail.app"
+```
+
+### Health Check Configuration
+* **Health Check Path:** `/api/v1/health`
+* **Interval:** 30 seconds
+* **Timeout:** 5 seconds
+* **Expected Status:** `200 OK`
+
+---
+
+## 4. Frontend Web Deployment (`apps/web`)
+
+Deploy the React 19 SPA to Vercel:
+
+### Vercel Project Settings
+* **Framework Preset:** `Vite`
+* **Root Directory:** `apps/web`
+* **Build Command:** `pnpm build`
+* **Output Directory:** `dist`
+* **Install Command:** `pnpm install`
+
+### Frontend Environment Variables
+```env
+VITE_API_URL="https://api.papertrail.app"
+VITE_CLERK_PUBLISHABLE_KEY="pk_live_..."
+```
+
+### SPA Routing Rule (`vercel.json`)
+Ensure all incoming routes fallback to `index.html`:
 ```json
-[
-  {
-    "AllowedOrigins": [
-      "https://papertrail.app",
-      "http://localhost:5173"
-    ],
-    "AllowedMethods": ["GET", "PUT", "HEAD"],
-    "AllowedHeaders": ["Content-Type", "Content-Length", "Authorization"],
-    "MaxAgeSeconds": 3600
-  }
-]
+{
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
 ```
 
 ---
 
-## 3. Database Deployment (Neon PostgreSQL)
-
-1. Provision a Neon project and copy the connection string.
-2. In the monorepo root, set `DATABASE_URL` in your environment:
-   ```bash
-   DATABASE_URL="postgresql://user:password@ep-sample-pooler.us-east-2.aws.neon.tech/papertrail?sslmode=require"
-   ```
-3. Run the Prisma migration:
-   ```bash
-   pnpm --filter @papertrail/api prisma:push
-   ```
-
----
-
-## 4. Backend API Deployment (`apps/api`)
-
-Deploy to Railway, Render, or any Docker/Node.js host:
-
-- **Build Command**: `pnpm --filter @papertrail/api build`
-- **Start Command**: `node apps/api/dist/main.js`
-- **Port**: `8000` (or injected `PORT`)
-- **Required Environment Variables**:
-  - `DATABASE_URL`
-  - `CLOUDFLARE_R2_ACCOUNT_ID`
-  - `CLOUDFLARE_R2_ACCESS_KEY_ID`
-  - `CLOUDFLARE_R2_SECRET_ACCESS_KEY`
-  - `CLOUDFLARE_R2_BUCKET_NAME`
-  - `CLERK_SECRET_KEY`
-  - `GEMINI_API_KEY`
-
----
-
-## 5. Web Application Deployment (`apps/web`)
-
-Deploy the React SPA to Vercel or Cloudflare Pages:
-
-- **Framework Preset**: Vite
-- **Root Directory**: `apps/web`
-- **Build Command**: `pnpm build`
-- **Output Directory**: `dist`
-- **Environment Variables**:
-  - `VITE_API_URL`: `https://api.papertrail.app`
-  - `VITE_CLERK_PUBLISHABLE_KEY`: `pk_live_...`
-
----
-
-## 6. Android Mobile Application Builds (`apps/web/android`)
-
-PaperTrail packages natively for Android via **Capacitor**:
+## 5. Android Mobile Application Deployment (Capacitor 8)
 
 ### Prerequisites
-- Android Studio Ladybug or later with Android SDK Platform 35
-- Java 21 JDK configured (`JAVA_HOME`)
+* Android Studio Ladybug or later with Android SDK 35 installed.
+* Java 21 JDK configured.
 
-### Sync Web Assets & Plugins
-Build the web bundle and sync assets to the native Android container:
+### 1. Compile Web Assets & Sync Native Bridge
 ```bash
 cd apps/web
 pnpm build
 npx cap sync android
 ```
 
-### Build Android Standalone APK (Debug / Testing)
+### 2. Generate Release Keystore (One-Time)
 ```bash
-cd apps/web/android
-./gradlew assembleDebug
+keytool -genkey -v -keystore papertrail-release.jks -keyalg RSA -keysize 2048 -validity 10000 -alias papertrail
 ```
-The installable APK will be generated at:
-`apps/web/android/app/build/outputs/apk/debug/app-debug.apk`
 
-### Build Production Android App Bundle (.aab for Google Play Store)
-```bash
-cd apps/web/android
-./gradlew bundleRelease
-```
-The production bundle will be generated at:
-`apps/web/android/app/build/outputs/bundle/release/app-release.aab`
+### 3. Build Signed Android App Bundle (AAB)
+Inside Android Studio:
+1. Open folder: `apps/web/android`.
+2. Navigate to **Build > Generate Signed Bundle / APK**.
+3. Choose **Android App Bundle (.aab)**.
+4. Select your `papertrail-release.jks` keystore and supply credentials.
+5. Build output target: `release`.
+6. Output bundle location: `apps/web/android/app/release/app-release.aab`.
+
+Upload the generated `.aab` file directly to the **Google Play Console** under Production Track.

@@ -1,110 +1,190 @@
-# PaperTrail — REST API Reference (`/api/v1`)
+# PaperTrail — Comprehensive REST API Reference (`/api/v1`)
 
-The PaperTrail centralized backend provides versioned RESTful endpoints consumed by both **PaperTrail Web** and **PaperTrail Mobile**.
-
-- **Development Base URL**: `http://localhost:8000/api/v1`
-- **Interactive Swagger Docs**: `http://localhost:8000/api/docs`
-- **Authentication**: Bearer Token in `Authorization` header (`Bearer <clerk_session_jwt>`)
+**API Version:** `v1.0.0`  
+**Base Protocol:** HTTPS / TLS 1.3  
+**Development URL:** `http://localhost:8000/api/v1`  
+**Swagger UI Documentation:** `http://localhost:8000/api/docs`  
+**Authentication Scheme:** Bearer Token via Clerk Session JWT (`Authorization: Bearer <clerk_token>`)  
 
 ---
 
-## 1. Authentication Endpoints
+## 1. Global Request & Response Specifications
 
-### `GET /api/v1/auth/me`
-Retrieves the authenticated user's profile, vault settings, and storage metrics.
-
-**Headers**:
+### Headers
+Every authenticated request must include:
 ```http
-Authorization: Bearer <token>
+Authorization: Bearer <clerk_jwt_token>
+Content-Type: application/json
+Accept: application/json
 ```
 
-**Response (200 OK)**:
+### Standard Response Envelopes
+All endpoints return structured JSON envelopes conforming to `@papertrail/contracts`:
+
+#### Success Envelope (HTTP 200, 201)
+```json
+{
+  "success": true,
+  "data": { ... },
+  "message": "Operation completed successfully"
+}
+```
+
+#### Error Envelope (HTTP 400, 401, 403, 404, 429, 500)
+```json
+{
+  "statusCode": 403,
+  "message": "Access denied: You do not own this document",
+  "error": "Forbidden",
+  "timestamp": "2026-11-08T15:30:00.000Z",
+  "path": "/api/v1/documents/doc-544326"
+}
+```
+
+---
+
+## 2. Health & Telemetry Endpoint
+
+### `GET /api/v1/health`
+Probes API health, executes a live `SELECT 1` ping against Neon PostgreSQL, and measures system memory and uptime.
+
+* **Authentication:** None (Public / Monitoring agent)
+* **Response (200 OK):**
+```json
+{
+  "status": "ok",
+  "timestamp": "2026-11-08T15:32:00.000Z",
+  "uptimeSeconds": 1420,
+  "totalLatencyMs": 4,
+  "database": {
+    "engine": "Neon PostgreSQL",
+    "status": "connected",
+    "latencyMs": 3
+  },
+  "storage": {
+    "engine": "Neon DB Direct Vault",
+    "encryption": "AES-256-GCM",
+    "isolation": "Row-level cryptographic user scoping"
+  },
+  "system": {
+    "nodeVersion": "v22.13.0",
+    "platform": "win32",
+    "heapUsedMb": "48.2",
+    "heapTotalMb": "64.0",
+    "rssMb": "112.5"
+  }
+}
+```
+
+---
+
+## 3. Authentication & Profile Endpoints
+
+### `GET /api/v1/auth/me`
+Retrieves the authenticated user's profile, vault quota, and onboarding status.
+
+* **Headers:** `Authorization: Bearer <token>`
+* **Response (200 OK):**
 ```json
 {
   "success": true,
   "data": {
-    "id": "usr_99214a",
+    "id": "usr_99214a-8812",
     "clerkId": "user_2test123",
-    "email": "lohith.k@vault.io",
+    "email": "user@papertrail.app",
     "fullName": "Lohith Kumar",
     "tagline": "Personal Document Vault",
+    "avatarUrl": "https://img.clerk.com/...",
     "storageUsedBytes": 15518976,
     "storageQuotaBytes": 524288000,
     "encryptionEnabled": true,
-    "biometricEnabled": true
+    "biometricEnabled": true,
+    "onboardingCompleted": true,
+    "onboardingStep": 6,
+    "selectedDocumentCategories": ["Insurance", "Identity", "Vehicle"],
+    "preferredLanguage": "en"
   }
 }
 ```
 
 ---
 
-## 2. Storage & Upload Endpoints
+### `PATCH /api/v1/auth/onboarding`
+Updates the user's progress through the multi-step onboarding wizard.
 
-### `POST /api/v1/storage/upload-url`
-Issues a signed, short-lived Cloudflare R2 upload URL for direct file upload.
-
-**Request Body**:
+* **Headers:** `Authorization: Bearer <token>`
+* **Request Body:**
 ```json
 {
-  "filename": "geico-auto-insurance.pdf",
-  "fileType": "pdf",
-  "fileSizeBytes": 2516582
+  "step": 4,
+  "displayName": "Lohith Kumar",
+  "preferredLanguage": "en",
+  "selectedCategories": ["Insurance", "Identity", "Vehicle", "Education"],
+  "reminderPreferences": {
+    "documentExpiry": true,
+    "warrantyExpiry": true,
+    "insuranceRenewal": true,
+    "billPayment": false
+  }
 }
 ```
+* **Response (200 OK):** Returns updated `User` object.
 
-**Response (200 OK)**:
+---
+
+### `DELETE /api/v1/auth/account`
+Irreversibly deletes the authenticated user's account, cascading to all documents, encrypted blobs, folders, reminders, and active share tokens.
+
+* **Headers:** `Authorization: Bearer <token>`
+* **Response (200 OK):**
 ```json
 {
   "success": true,
-  "data": {
-    "uploadUrl": "https://<account-id>.r2.cloudflarestorage.com/papertrail-vault/users/usr_99214a/docs/1730456000-xyz.pdf?X-Amz-Signature=...",
-    "fileKey": "users/usr_99214a/docs/1730456000-xyz.pdf",
-    "expiresAt": "2026-11-01T12:30:00.000Z",
-    "maxSizeBytes": 2516582
-  }
+  "message": "Account and all associated encrypted vault records permanently deleted"
 }
 ```
 
-### `GET /api/v1/storage/info`
-Returns current user storage capacity, usage bytes, and percentage.
-
 ---
 
-## 3. Documents Endpoints
+## 4. Document Management Endpoints
 
 ### `GET /api/v1/documents`
-Lists documents with support for search, category filtering, and sorting.
+Lists documents with support for full-text search, category filtering, and pagination.
 
-**Query Parameters**:
-- `search` *(optional)*: Substring query across title, category, issuer, and tags.
-- `category` *(optional)*: `Insurance` | `Identity` | `Vehicle` | `Education` | `Warranty` | `Finance` | `Medical`.
-- `filter` *(optional)*: `all` | `recent` | `expiring`.
-- `sortBy` *(optional)*: `date` (default) | `expiry` | `title`.
-- `page` *(optional)*: Page number (default: 1).
-- `limit` *(optional)*: Records per page (default: 20).
+* **Query Parameters:**
+  * `search` *(string, optional)*: Substring search across title, issuer, or tags.
+  * `category` *(enum, optional)*: `Insurance` | `Identity` | `Vehicle` | `Education` | `Warranty` | `Finance` | `Medical`.
+  * `filter` *(enum, optional)*: `all` | `recent` | `expiring`.
+  * `sortBy` *(enum, optional)*: `date` (default) | `expiry` | `title`.
+  * `page` *(number, optional)*: Page index (default: `1`).
+  * `limit` *(number, optional)*: Items per page (default: `20`, max: `100`).
 
-**Response (200 OK)**:
+* **Response (200 OK):**
 ```json
 {
   "success": true,
   "data": {
     "documents": [
       {
-        "id": "doc-1",
-        "title": "Vehicle Insurance Policy",
+        "id": "doc-544326",
+        "userId": "usr_99214a-8812",
+        "title": "Comprehensive Motor Insurance",
         "category": "Insurance",
-        "fileKey": "users/usr_99214a/docs/geico-auto-policy.pdf",
         "fileType": "pdf",
-        "fileSizeBytes": 2516582,
-        "fileSizeFormatted": "2.4 MB",
+        "fileSizeBytes": 2457600,
+        "fileSizeFormatted": "2.3 MB",
         "issueDate": "2025-11-12",
         "expiryDate": "2026-11-12",
-        "daysLeft": 12,
+        "daysLeft": 4,
         "isExpiringSoon": true,
         "isVerified": true,
         "policyNumber": "POL-88392-GEICO",
         "issuer": "GEICO Auto Insurance",
-        "tags": ["Automobile", "Geico"]
+        "notes": "Comprehensive collision & third-party liability coverage.",
+        "tags": ["Insurance", "Vehicle", "Renewal"],
+        "isPriority": true,
+        "badgeLabel": "EXPIRING SOON",
+        "badgeType": "danger"
       }
     ],
     "total": 1
@@ -112,95 +192,163 @@ Lists documents with support for search, category filtering, and sorting.
 }
 ```
 
-### `GET /api/v1/documents/:id`
-Retrieves a single document along with an on-demand presigned download/view URL.
+---
 
 ### `POST /api/v1/documents`
-Saves new document metadata to the vault after file upload has succeeded in Cloudflare R2.
+Ingests a new document into the vault. Validates binary magic-bytes, computes a SHA-256 duplicate checksum, and encrypts the payload using **AES-256-GCM** before writing to Neon DB.
 
-**Request Body**:
+* **Request Body:**
 ```json
 {
-  "title": "MacBook Pro AppleCare Warranty",
-  "category": "Warranty",
-  "fileKey": "users/usr_99214a/docs/applecare.pdf",
+  "title": "International Travel Passport",
+  "category": "Identity",
   "fileType": "pdf",
-  "fileSizeBytes": 890000,
-  "issueDate": "2024-12-15",
-  "expiryDate": "2026-12-15",
-  "issuer": "Apple Inc.",
-  "policyNumber": "APL-CARE-M3-9941",
-  "tags": ["Warranty", "Electronics", "Laptop"]
+  "fileSizeBytes": 1887436,
+  "fileData": "data:application/pdf;base64,JVBERi0xLjQK...",
+  "issueDate": "2024-08-15",
+  "expiryDate": "2034-08-14",
+  "issuer": "Ministry of External Affairs",
+  "policyNumber": "Z8920147B",
+  "notes": "Biometric passport with electronic chip.",
+  "tags": ["Identity", "Travel", "Passport"],
+  "isPriority": true
 }
 ```
+
+* **Validation Rules:**
+  * `fileData` must match the magic bytes for `fileType` (e.g. `%PDF` for PDF).
+  * `fileSizeBytes` cannot exceed 50 MB (`52428800` bytes).
+  * `title` is required (1 to 200 characters).
+
+* **Response (201 Created):**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "doc-994821",
+    "title": "International Travel Passport",
+    "category": "Identity",
+    "fileType": "pdf",
+    "fileSizeBytes": 1887436,
+    "fileSizeFormatted": "1.8 MB",
+    "fileUrl": "data:application/pdf;base64,JVBERi0xLjQK...",
+    "isVerified": true
+  },
+  "message": "Document saved to vault successfully"
+}
+```
+
+* **Error Responses:**
+  * `400 Bad Request`: `"Security Violation: File binary signature does not match declared file type"`
+
+---
+
+### `GET /api/v1/documents/:id`
+Retrieves document metadata and decrypts the stored AES-256-GCM payload for the verified owner.
+
+* **Response (200 OK):** Returns decrypted `DocumentItem`.
+* **Error Responses:**
+  * `403 Forbidden`: `"Access denied: You do not own this document"`
+  * `404 Not Found`: `"Document with ID ... not found"`
+
+---
 
 ### `PATCH /api/v1/documents/:id`
-Updates title, notes, tags, or expiration date.
+Updates document metadata, issuer, policy number, tags, or notes.
 
-### `DELETE /api/v1/documents/:id`
-Deletes a document from PostgreSQL, decrements user storage usage, and removes linked reminders.
-
-### `POST /api/v1/documents/:id/verify`
-Marks document authenticity status as verified.
+* **Request Body:** Partial `CreateDocumentDto`.
+* **Response (200 OK):** Updated document item.
 
 ---
 
-## 4. Reminders & Expiration Alerts
+### `DELETE /api/v1/documents/:id`
+Permanently deletes the document record, encrypted binary, and linked reminder alerts.
 
-### `GET /api/v1/reminders`
-Lists all active and completed renewal reminders for the authenticated user.
-
-### `POST /api/v1/reminders`
-Creates a new reminder associated with a document.
+* **Response (200 OK):**
 ```json
 {
-  "documentId": "doc-1",
-  "title": "Renew Geico Car Insurance before lapse",
-  "dueDate": "2026-11-12"
+  "success": true,
+  "data": { "success": true },
+  "message": "Document deleted successfully"
 }
 ```
 
-### `POST /api/v1/reminders/:id/toggle`
-Toggles reminder completion/resolved status.
+---
+
+### `POST /api/v1/documents/:id/verify`
+Marks the document record with official cryptographic verification status.
+
+* **Response (200 OK):** Returns document with `isVerified: true`.
 
 ---
 
-## 5. Document Sharing
+## 5. Expiry & Reminder Endpoints
 
-### `POST /api/v1/share`
-Generates a short-lived tokenized public access link.
+### `GET /api/v1/reminders`
+Lists all expiry reminders belonging to the authenticated user sorted by due date.
+
+* **Response (200 OK):**
 ```json
 {
-  "documentId": "doc-1",
+  "success": true,
+  "data": [
+    {
+      "id": "rem-449102",
+      "userId": "usr_99214a-8812",
+      "documentId": "doc-544326",
+      "documentTitle": "Comprehensive Motor Insurance",
+      "title": "Comprehensive Motor Insurance Expiration",
+      "dueDate": "2026-11-12",
+      "daysLeft": 4,
+      "urgency": "critical",
+      "isCompleted": false,
+      "category": "Insurance"
+    }
+  ]
+}
+```
+
+---
+
+### `POST /api/v1/reminders/:id/toggle`
+Toggles reminder completion status (`isCompleted: true / false`).
+
+---
+
+## 6. Cryptographic Sharing Endpoints
+
+### `POST /api/v1/share`
+Generates a time-limited cryptographic sharing token.
+
+* **Request Body:**
+```json
+{
+  "documentId": "doc-544326",
   "expiresInHours": 48
 }
 ```
 
+* **Response (201 Created):**
+```json
+{
+  "success": true,
+  "data": {
+    "token": "shr_8a9f24c0e817...",
+    "shareUrl": "https://papertrail.app/share/shr_8a9f24c0e817...",
+    "expiresAt": "2026-11-10T15:30:00.000Z"
+  }
+}
+```
+
+---
+
 ### `GET /api/v1/share/:token`
-Public endpoint allowing recipients to view the shared document within the validity window.
+Resolves a public preview for an authorized share token if not expired or revoked.
+
+* **Authentication:** None (Token verified)
+* **Response (200 OK):** Returns sanitised document preview data.
 
 ---
 
-## 6. OCR & Text Extraction
-
-### `POST /api/v1/ocr/extract`
-Triggers Gemini API document parsing for auto-classification and expiration detection.
-```json
-{
-  "fileKey": "users/usr_99214a/docs/scanned-card.jpg"
-}
-```
-
----
-
-## Standard Error Response Format
-
-```json
-{
-  "statusCode": 400,
-  "message": ["Filename is required", "fileSizeBytes must be a positive number"],
-  "error": "Bad Request",
-  "timestamp": "2026-11-01T12:00:00.000Z",
-  "path": "/api/v1/storage/upload-url"
-}
-```
+### `POST /api/v1/share/:token/revoke`
+Immediately revokes active access to a shared token. Requires document owner authentication.
