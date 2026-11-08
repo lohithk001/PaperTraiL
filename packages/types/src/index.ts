@@ -44,8 +44,9 @@ export interface DocumentItem {
   folderId?: string | null;
   title: string;
   category: DocumentCategory;
-  fileKey: string; // Cloudflare R2 object key
-  fileUrl?: string; // Presigned view URL
+  fileKey?: string;
+  fileData?: string; // Stored directly in Neon DB
+  fileUrl?: string; // Resolved view/download URL (or data URL from Neon DB)
   fileType: FileFormat;
   fileSizeBytes: number;
   fileSizeFormatted: string;

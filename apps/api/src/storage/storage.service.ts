@@ -35,8 +35,8 @@ export class StorageService {
       throw new BadRequestException('Storage quota exceeded. Please free up space or upgrade.');
     }
 
-    const fileExtension = filename.split('.').pop() || fileType;
-    const uniqueKey = `users/${user.id}/docs/${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExtension}`;
+    const sanitizedExt = (filename.split('.').pop() || fileType).replace(/[^a-zA-Z0-9]/g, '').toLowerCase() || 'bin';
+    const uniqueKey = `users/${user.id}/docs/${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${sanitizedExt}`;
 
     const mimeMap: Record<string, string> = {
       pdf: 'application/pdf',

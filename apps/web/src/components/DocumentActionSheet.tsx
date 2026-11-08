@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useDocumentContext } from '../context/DocumentContext';
 import { shareDocumentNative } from '../services/nativeService';
+import { toast } from './ui';
 
 export const DocumentActionSheet: React.FC = () => {
   const { 
@@ -33,12 +34,20 @@ export const DocumentActionSheet: React.FC = () => {
 
   const handleCopyLink = () => {
     navigator.clipboard?.writeText(window.location.origin + `/documents/${doc.id}`);
-    alert('Document link copied to clipboard!');
+    toast.success('Link copied to clipboard', 'Share link is ready to paste.');
     setIsActionSheetOpen(false);
   };
 
   const handleDownload = () => {
-    alert(`Downloading ${doc.title} (${doc.fileSize})`);
+    if (doc.fileUrl) {
+      const link = document.createElement('a');
+      link.href = doc.fileUrl;
+      link.download = `${doc.title.replace(/[^\w\s-]/g, '').replace(/\s+/g, '_')}.${doc.fileType || 'pdf'}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+    toast.info('Downloading document', `${doc.title} (${doc.fileSize || 'ready'})`);
     setIsActionSheetOpen(false);
   };
 

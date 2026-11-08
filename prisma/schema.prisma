@@ -84,7 +84,8 @@ model Document {
 
   title           String
   category        DocumentCategory
-  fileKey         String           @unique // Cloudflare R2 object storage key
+  fileKey         String?          // Storage identifier / metadata reference
+  fileData        String?          @db.Text // Document file payload stored directly in Neon PostgreSQL
   fileType        String           // pdf, png, jpg, jpeg
   fileSizeBytes   Int
   issueDate       DateTime?        @db.Date

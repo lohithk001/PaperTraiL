@@ -27,6 +27,7 @@ import {
 import { useDocumentContext, formatBytes } from '../context/DocumentContext';
 import { shareDocumentNative } from '../services/nativeService';
 import { DocumentCategory } from '../types';
+import { ConfirmDialog, toast } from '../components/ui';
 
 export const DocumentDetailScreen: React.FC = () => {
   const { 
@@ -55,6 +56,7 @@ export const DocumentDetailScreen: React.FC = () => {
   const [renameValue, setRenameValue] = useState('');
   const [isMoveOpen, setIsMoveOpen] = useState(false);
   const [moveFolderValue, setMoveFolderValue] = useState<DocumentCategory>((doc?.category as DocumentCategory) || 'Identity');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   if (!doc) {
     return (
@@ -153,10 +155,7 @@ export const DocumentDetailScreen: React.FC = () => {
   };
 
   const handleDelete = () => {
-    if (confirm(`Are you sure you want to delete "${doc.title}" from your vault?`)) {
-      deleteDocument(doc.id);
-      setActiveTab('documents');
-    }
+    setShowDeleteConfirm(true);
   };
 
   const handleOpenRename = () => {
@@ -169,6 +168,7 @@ export const DocumentDetailScreen: React.FC = () => {
     if (renameValue.trim()) {
       updateDocument(doc.id, { title: renameValue.trim() });
       setIsRenameOpen(false);
+      toast.success('Document renamed', `Updated title to "${renameValue.trim()}".`);
     }
   };
 
@@ -182,6 +182,7 @@ export const DocumentDetailScreen: React.FC = () => {
     if (moveFolderValue) {
       updateDocument(doc.id, { category: moveFolderValue as any });
       setIsMoveOpen(false);
+      toast.success('Moved folder', `Document moved to ${moveFolderValue}.`);
     }
   };
 
@@ -341,7 +342,7 @@ export const DocumentDetailScreen: React.FC = () => {
                       {doc.title}
                     </h2>
                     <p className="text-[10px] font-mono text-slate-500 mt-0.5">
-                      Record #{doc.id.toUpperCase()} • Category: {doc.category}
+                      Record #{doc.id.toUpperCase()} · Category: {doc.category}
                     </p>
                   </div>
 
@@ -366,7 +367,7 @@ export const DocumentDetailScreen: React.FC = () => {
                     </div>
                     <div className="flex justify-between border-b border-slate-100 pb-1.5">
                       <span className="text-slate-500 font-medium">File Metadata</span>
-                      <span className="font-mono text-slate-900 uppercase">{doc.fileType} • {doc.fileSize}</span>
+                      <span className="font-mono text-slate-900 uppercase">{doc.fileType} · {doc.fileSize}</span>
                     </div>
                     {doc.notes && (
                       <div className="pt-1 text-[11px] text-slate-600">
@@ -612,6 +613,22 @@ export const DocumentDetailScreen: React.FC = () => {
           </form>
         </div>
       )}
+
+      {/* Modern In-App Confirmation Dialog */}
+      <ConfirmDialog
+        open={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={() => {
+          deleteDocument(doc.id);
+          setShowDeleteConfirm(false);
+          setActiveTab('documents');
+          toast.success('Document deleted', `"${doc.title}" was removed from your vault.`);
+        }}
+        title="Delete Document"
+        description={`Are you sure you want to permanently delete "${doc.title}" from your vault? This action cannot be undone.`}
+        confirmLabel="Delete Document"
+        variant="danger"
+      />
 
     </div>
   );

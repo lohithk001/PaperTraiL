@@ -217,9 +217,10 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           return 'home';
         }
       }
-      return 'onboarding';
+      const isMobile = isNative || (typeof window !== 'undefined' && window.innerWidth < 768);
+      return isMobile ? 'auth' : 'landing';
     } catch {
-      return 'onboarding';
+      return isNative ? 'auth' : 'landing';
     }
   });
   const [filter, setFilter] = useState<FilterType>('all');
@@ -268,6 +269,29 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       return 'responsive';
     }
   });
+
+  // Automatically synchronize documents and reminders from backend database
+  useEffect(() => {
+    apiClient.listDocuments()
+      .then(res => {
+        if (res && res.documents && res.documents.length > 0) {
+          setDocuments(res.documents);
+        }
+      })
+      .catch(() => {
+        // Keep local storage cache if offline
+      });
+
+    apiClient.listReminders()
+      .then(res => {
+        if (res && res.length > 0) {
+          setReminders(res);
+        }
+      })
+      .catch(() => {
+        // Keep local storage cache if offline
+      });
+  }, []);
 
   // Sync to localStorage
   useEffect(() => {
@@ -451,6 +475,26 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       type: 'success',
     };
     setNotifications(prev => [newNotif, ...prev]);
+
+    // Asynchronously synchronize with backend API & Neon Database
+    apiClient.createDocument({
+      title: newDoc.title,
+      category: newDoc.category,
+      fileKey: newDoc.fileName ? `users/docs/${newDoc.fileName}` : `users/docs/${newDoc.id}.${newDoc.fileType}`,
+      fileData: newDoc.fileUrl || undefined, // Stored directly in Neon PostgreSQL
+      fileType: (newDoc.fileType as any) || 'pdf',
+      fileSizeBytes: newDoc.fileSizeBytes || parseFileSizeToBytes(newDoc.fileSize),
+      issueDate: newDoc.issueDate,
+      expiryDate: newDoc.expiryDate || undefined,
+      policyNumber: newDoc.policyNumber,
+      issuer: newDoc.issuer,
+      notes: newDoc.notes,
+      tags: newDoc.tags,
+      isPriority: newDoc.isPriority,
+    }).catch(err => {
+      console.warn('Backend document sync deferred (cached locally):', err);
+    });
+
     return newDoc;
   };
 
@@ -469,6 +513,9 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (selectedDocument && selectedDocument.id === id) {
       setSelectedDocument(null);
     }
+    apiClient.deleteDocument(id).catch(err => {
+      console.warn('Backend document delete deferred:', err);
+    });
     if (docToDelete) {
       const newNotif: NotificationItem = {
         id: `notif-${Date.now()}`,
@@ -538,8 +585,9 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     expiresAt: string
   ) => {
     const doc = documents.find(d => d.id === docId);
+    const tempId = `share-${Date.now()}`;
     const newShare: SharedDocumentItem = {
-      id: `share-${Date.now()}`,
+      id: tempId,
       documentId: docId,
       documentTitle: doc ? doc.title : 'Document',
       fileType: doc ? doc.fileType : 'pdf',
@@ -554,6 +602,21 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       status: 'active',
     };
     setSharedDocuments(prev => [newShare, ...prev]);
+
+    // Persist to Neon DB
+    if (docId) {
+      const hours = Math.max(1, Math.round((new Date(expiresAt).getTime() - Date.now()) / (1000 * 60 * 60)));
+      apiClient.createShareLink(docId, hours)
+        .then(tokenRes => {
+          if (tokenRes && tokenRes.token) {
+            setSharedDocuments(prev => prev.map(s => s.id === tempId ? { ...s, id: tokenRes.token } : s));
+          }
+        })
+        .catch(e => {
+          console.warn('[PaperTrail] Could not persist share token to backend:', e);
+        });
+    }
+
     const newNotif: NotificationItem = {
       id: `notif-${Date.now()}`,
       title: 'Document Shared',
@@ -569,6 +632,9 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setSharedDocuments(prev =>
       prev.map(s => (s.id === id ? { ...s, status: 'revoked' as const } : s))
     );
+    apiClient.revokeShareLink(id).catch(e => {
+      console.warn('[PaperTrail] Could not revoke share token on backend:', e);
+    });
     const target = sharedDocuments.find(s => s.id === id);
     if (target) {
       const newNotif: NotificationItem = {
@@ -598,21 +664,45 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   const addReminder = (remData: Omit<ReminderItem, 'id'>) => {
+    const tempId = `rem-${Date.now()}`;
     const newRem: ReminderItem = {
       ...remData,
-      id: `rem-${Date.now()}`,
+      id: tempId,
     };
     setReminders(prev => [newRem, ...prev]);
+
+    // Persist to Neon DB if documentId exists
+    if (remData.documentId && remData.documentId !== 'custom') {
+      apiClient.createReminder({
+        documentId: remData.documentId,
+        title: remData.title,
+        dueDate: remData.dueDate,
+      })
+      .then(persisted => {
+        if (persisted && persisted.id) {
+          setReminders(prev => prev.map(r => r.id === tempId ? persisted : r));
+        }
+      })
+      .catch(e => {
+        console.warn('[PaperTrail] Could not persist reminder to database:', e);
+      });
+    }
   };
 
   const toggleReminder = (id: string) => {
     setReminders(prev =>
       prev.map(r => (r.id === id ? { ...r, isCompleted: !r.isCompleted } : r))
     );
+    apiClient.toggleReminder(id).catch(e => {
+      console.warn('[PaperTrail] Could not toggle reminder on database:', e);
+    });
   };
 
   const deleteReminder = (id: string) => {
     setReminders(prev => prev.filter(r => r.id !== id));
+    apiClient.deleteReminder(id).catch(e => {
+      console.warn('[PaperTrail] Could not delete reminder on database:', e);
+    });
   };
 
   const markNotificationRead = (id: string) => {

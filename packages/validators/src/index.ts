@@ -19,7 +19,8 @@ export const RequestPresignedUploadSchema = z.object({
 export const CreateDocumentSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200),
   category: DocumentCategoryEnum,
-  fileKey: z.string().min(1, 'File storage key is required'),
+  fileKey: z.string().optional(),
+  fileData: z.string().optional(), // Base64 data-URL payload for direct Neon DB storage
   fileType: z.enum(['pdf', 'png', 'jpg', 'jpeg']),
   fileSizeBytes: z.number().int().positive(),
   folderId: z.string().uuid().optional().nullable(),

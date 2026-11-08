@@ -61,6 +61,8 @@ export const API_ROUTES = {
     SYNC_CLERK: '/api/v1/auth/sync',
     ONBOARDING: '/api/v1/auth/onboarding',
     ONBOARDING_COMPLETE: '/api/v1/auth/onboarding/complete',
+    EXPORT: '/api/v1/auth/export',
+    DELETE_ACCOUNT: '/api/v1/auth/account',
   },
   DOCUMENTS: {
     BASE: '/api/v1/documents',
@@ -94,4 +96,5 @@ export const API_ROUTES = {
   OCR: {
     EXTRACT: '/api/v1/ocr/extract',
   },
+  HEALTH: '/api/v1/health',
 } as const;

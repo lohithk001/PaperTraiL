@@ -376,12 +376,12 @@ export const OnboardingScreen: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#F7F9FC] text-[#0F172A] flex flex-col font-sans select-none antialiased">
+    <div className="min-h-screen w-full bg-[#F6F6F2] text-[#20211F] flex flex-col font-sans select-none antialiased">
       
       {/* ─────────────────────────────────────────────────────────────
           TOP NAVBAR: Progress Tracker & Brand Identity
       ───────────────────────────────────────────────────────────── */}
-      <header className="w-full bg-white/80 backdrop-blur-md border-b border-[#E2E8F0] sticky top-0 z-30 px-4 sm:px-8 py-3.5 transition-all">
+      <header className="w-full bg-white/90 backdrop-blur-md border-b border-[#E6E6E0] sticky top-0 z-30 px-4 sm:px-8 py-3.5 transition-all">
         <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
           
           {/* Brand Mark */}
@@ -492,7 +492,7 @@ export const OnboardingScreen: React.FC = () => {
                     <ShieldCheck className="w-4 h-4" />
                   </div>
                   <h4 className="text-[11px] font-bold text-[#0F172A]">Safe Vault</h4>
-                  <p className="text-[10px] text-[#64748B]">Cloudflare R2 private isolation</p>
+                  <p className="text-[10px] text-[#64748B]">Neon DB vault isolation</p>
                 </div>
 
                 <div className="p-3 rounded-2xl bg-white border border-[#E2E8F0] shadow-2xs">
@@ -714,10 +714,10 @@ export const OnboardingScreen: React.FC = () => {
                   <div className="space-y-1 text-left">
                     <div className="flex items-center gap-2">
                       <h3 className="text-sm font-bold text-[#0F172A]">Private Document Storage</h3>
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-[#1D5FF0]">Cloudflare R2</span>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-[#1D5FF0]">Neon DB Vault</span>
                     </div>
                     <p className="text-xs text-[#64748B] leading-relaxed">
-                      Every file is saved inside an isolated storage path scoped to your authenticated identity (<code className="text-[#0F172A] font-mono text-[11px] bg-slate-100 px-1 py-0.5 rounded">users/[userId]/docs/...</code>). Storage buckets have strict private policies and are never publicly indexed or accessible.
+                      Every file is saved inside encrypted Neon PostgreSQL database storage scoped strictly to your authenticated identity. Vault records are protected by row-level isolation and are never publicly indexed or accessible.
                     </p>
                   </div>
                 </div>
@@ -749,7 +749,7 @@ export const OnboardingScreen: React.FC = () => {
                       <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-[#10B981]">TLS 1.3 + AES-256</span>
                     </div>
                     <p className="text-xs text-[#64748B] leading-relaxed">
-                      All communications between your device, the PaperTrail backend, and cloud storage use TLS 1.3 transport encryption. Uploaded documents are automatically encrypted at rest on Cloudflare storage volumes using industry-standard AES-256.
+                      All communications between your device and the PaperTrail backend use TLS 1.3 transport encryption. Uploaded documents are automatically encrypted at rest in Neon PostgreSQL using industry-standard AES-256.
                     </p>
                   </div>
                 </div>

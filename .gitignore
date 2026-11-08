@@ -66,3 +66,6 @@ Thumbs.db
 .tmp/
 .cache/
 .turbo/
+
+
+.agents/

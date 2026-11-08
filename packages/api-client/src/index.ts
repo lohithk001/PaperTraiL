@@ -106,6 +106,16 @@ export class PaperTrailApiClient {
     });
   }
 
+  async exportVault(): Promise<any> {
+    return this.request(API_ROUTES.AUTH.EXPORT);
+  }
+
+  async deleteAccount(): Promise<{ success: boolean; message: string }> {
+    return this.request(API_ROUTES.AUTH.DELETE_ACCOUNT, {
+      method: 'DELETE',
+    });
+  }
+
   // --- Storage & Uploads ---
   async getPresignedUploadUrl(params: {
     filename: string;
@@ -244,6 +254,16 @@ export class PaperTrailApiClient {
     return this.request<ShareTokenItem>(API_ROUTES.SHARING.CREATE, {
       method: 'POST',
       body: JSON.stringify({ documentId, expiresInHours }),
+    });
+  }
+
+  async resolveShare(token: string): Promise<ShareTokenItem> {
+    return this.request<ShareTokenItem>(API_ROUTES.SHARING.RESOLVE(token));
+  }
+
+  async revokeShareLink(token: string): Promise<{ success: boolean; message: string }> {
+    return this.request<{ success: boolean; message: string }>(API_ROUTES.SHARING.REVOKE(token), {
+      method: 'DELETE',
     });
   }
 

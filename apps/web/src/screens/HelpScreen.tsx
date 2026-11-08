@@ -1,112 +1,102 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
 import { 
-  HelpCircle, 
-  Search, 
+  ChevronDown, 
+  MessageCircle, 
+  Mail, 
   ShieldCheck, 
-  Key, 
-  FileCheck, 
-  Share2, 
-  HardDrive, 
-  ExternalLink,
-  ChevronDown,
-  MessageCircle,
-  Mail
+  Lock, 
+  Clock 
 } from 'lucide-react';
 import { useDocumentContext } from '../context/DocumentContext';
+import { PageHeader, SectionHeader, Button, toast } from '../components/ui';
 
 export const HelpScreen: React.FC = () => {
   const { setIsAssistantOpen } = useDocumentContext();
-  const [searchQuery, setSearchQuery] = useState('');
   const [openFaq, setOpenFaq] = useState<number | null>(0);
 
   const faqs = [
     {
       q: 'How is my personal document vault encrypted?',
-      a: 'All files stored in PaperTrail are encrypted both in transit (TLS 1.3) and at rest using AES-256 military-grade encryption with unique zero-knowledge envelope keys.',
+      a: 'All documents stored in PaperTrail are encrypted in transit via TLS 1.3 and at rest directly in Neon PostgreSQL DB using AES-256 with tenant-isolated user ownership.',
     },
     {
       q: 'Can I share a document without exposing my full vault?',
-      a: 'Yes. PaperTrail allows you to generate signed, time-limited download links with permission controls (View Only or Download) that automatically expire after your chosen duration.',
+      a: 'Yes. PaperTrail allows you to generate signed, time-limited share links with granular permission controls (View Only or View & Download) that automatically expire after your chosen duration.',
     },
     {
       q: 'How do document expiry reminders work?',
-      a: 'PaperTrail automatically extracts expiration dates via OCR for insurance policies, warranties, and identity cards, and sends push or email notifications 30, 15, and 3 days before deadline.',
+      a: 'PaperTrail extracts expiration dates via OCR during document upload for insurance policies, warranties, and identity cards, and sends push or email notifications 30, 15, and 3 days before deadline.',
     },
     {
-      q: 'Does PaperTrail work offline on my Android device?',
-      a: 'Yes! The native Capacitor Android application caches your documents securely on your device storage, enabling instant viewing even when you have no cellular connection.',
+      q: 'Does PaperTrail work offline on mobile devices?',
+      a: 'Yes! The native Capacitor Android application caches your documents securely on your device storage, enabling instant viewing even when you have no network connection.',
     },
   ];
 
   return (
-    <div className="w-full max-w-5xl mx-auto px-4 sm:px-8 py-4 sm:py-6 space-y-6">
+    <div className="w-full space-y-6 select-none max-w-5xl mx-auto">
       
       {/* Header */}
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0F172A] tracking-tight font-display">
-          Help & Knowledge Base
-        </h1>
-        <p className="text-xs sm:text-sm font-medium text-[#64748B] mt-1">
-          Everything you need to know about PaperTrail vault security, features, and setup.
-        </p>
-      </div>
+      <PageHeader
+        title="Help & Knowledge Base"
+        subtitle="Guides, security details, and direct support for your personal vault"
+      />
 
       {/* Support Action Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div 
           onClick={() => setIsAssistantOpen(true)}
-          className="bg-white rounded-3xl p-6 border border-[#E2E8F0] shadow-subtle hover:border-[#1D5FF0]/50 transition-all cursor-pointer group flex items-start gap-4"
+          className="bg-white rounded-2xl p-5 border border-[#E6E6E0] shadow-xs hover:border-[#CFCFC8] transition-all cursor-pointer group flex items-start gap-4"
         >
-          <div className="w-12 h-12 rounded-2xl bg-[#EAF1FF] text-[#1D5FF0] flex items-center justify-center shrink-0">
-            <MessageCircle className="w-6 h-6 stroke-[2.2]" />
+          <div className="w-10 h-10 rounded-xl bg-[#E5EDFF] text-[#1D5FF0] flex items-center justify-center shrink-0">
+            <MessageCircle className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-base font-bold text-[#0F172A] group-hover:text-[#1D5FF0] transition-colors">
-              Ask PaperTrail AI Assistant
+            <h3 className="text-sm font-semibold text-[#20211F] group-hover:text-[#1D5FF0] transition-colors">
+              Vault AI Assistant
             </h3>
-            <p className="text-xs text-[#64748B] mt-1">
-              Ask natural questions about your documents, policies, or marksheet scores.
+            <p className="text-xs text-[#6B6E66] mt-0.5">
+              Ask natural questions about your documents, policies, or coverage terms.
             </p>
           </div>
         </div>
 
         <div 
-          onClick={() => alert('Support team contact: support@papertrail.io')}
-          className="bg-white rounded-3xl p-6 border border-[#E2E8F0] shadow-subtle hover:border-[#1D5FF0]/50 transition-all cursor-pointer group flex items-start gap-4"
+          onClick={() => toast.info('Engineering Support', 'Reach our team directly at support@papertrail.io (available 24/7)')}
+          className="bg-white rounded-2xl p-5 border border-[#E6E6E0] shadow-xs hover:border-[#CFCFC8] transition-all cursor-pointer group flex items-start gap-4"
         >
-          <div className="w-12 h-12 rounded-2xl bg-[#E8F6EF] text-[#27A879] flex items-center justify-center shrink-0">
-            <Mail className="w-6 h-6 stroke-[2.2]" />
+          <div className="w-10 h-10 rounded-xl bg-[#E8EDD8] text-[#3D5A14] flex items-center justify-center shrink-0">
+            <Mail className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-base font-bold text-[#0F172A] group-hover:text-[#27A879] transition-colors">
-              Contact Vault Support
+            <h3 className="text-sm font-semibold text-[#20211F] group-hover:text-[#1D5FF0] transition-colors">
+              Contact Engineering Support
             </h3>
-            <p className="text-xs text-[#64748B] mt-1">
-              Need assistance with your vault? Email our dedicated engineering support.
+            <p className="text-xs text-[#6B6E66] mt-0.5">
+              Email our dedicated engineering team for assistance with account or data queries.
             </p>
           </div>
         </div>
       </div>
 
       {/* Frequently Asked Questions */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#E2E8F0] shadow-subtle space-y-4">
-        <h2 className="text-lg font-bold text-[#0F172A]">Frequently Asked Questions</h2>
+      <div className="bg-white rounded-2xl p-5 sm:p-6 border border-[#E6E6E0] shadow-xs space-y-4">
+        <SectionHeader title="Frequently Asked Questions" />
         
-        <div className="divide-y divide-[#E2E8F0]">
+        <div className="divide-y divide-[#E6E6E0]">
           {faqs.map((faq, idx) => {
             const isOpen = openFaq === idx;
             return (
-              <div key={idx} className="py-4">
+              <div key={idx} className="py-3.5">
                 <button
                   onClick={() => setOpenFaq(isOpen ? null : idx)}
-                  className="w-full flex items-center justify-between text-left text-sm font-bold text-[#0F172A] hover:text-[#1D5FF0] transition-colors cursor-pointer"
+                  className="w-full flex items-center justify-between text-left text-xs sm:text-sm font-semibold text-[#20211F] hover:text-[#1D5FF0] transition-colors cursor-pointer gap-4"
                 >
                   <span>{faq.q}</span>
-                  <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isOpen ? 'rotate-180 text-[#1D5FF0]' : ''}`} />
+                  <ChevronDown className={`w-4 h-4 text-[#9B9E96] shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
                 </button>
                 {isOpen && (
-                  <p className="text-xs text-[#64748B] mt-2.5 leading-relaxed">
+                  <p className="text-xs text-[#6B6E66] mt-2 leading-relaxed">
                     {faq.a}
                   </p>
                 )}

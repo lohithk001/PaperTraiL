@@ -19,12 +19,14 @@ import {
   Globe,
   FolderArchive,
   Check,
-  RotateCcw
+  RotateCcw,
+  Scale
 } from 'lucide-react';
 import { useDocumentContext } from '../context/DocumentContext';
 import { triggerConfetti } from '../components/Confetti';
 import { useVaultAuth } from '../auth/ClerkAuthProvider';
 import { ReminderPreferences } from '../types';
+import { LegalModal } from '../components/LegalModal';
 
 const CATEGORIES_LIST = [
   'Identity',
@@ -338,6 +340,31 @@ export const SettingsScreen: React.FC = () => {
           </div>
           <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-[#1D5FF0]">
             <span>Relaunch Journey</span>
+            <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+          </div>
+        </div>
+
+        {/* Legal & DPDP Compliance Card */}
+        <div 
+          onClick={() => setActiveModal('legal')}
+          className="bg-white rounded-3xl p-5 border border-[#E2E8F0] shadow-subtle hover:border-[#1D5FF0]/40 transition-all cursor-pointer group flex flex-col justify-between"
+        >
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-10 h-10 rounded-xl bg-indigo-50 text-[#6366F1] flex items-center justify-center">
+                <Scale className="w-5 h-5 stroke-[2.2]" />
+              </div>
+              <span className="text-xs font-bold text-[#6366F1]">Compliance</span>
+            </div>
+            <h3 className="text-sm font-bold text-[#0F172A] group-hover:text-[#1D5FF0] transition-colors">
+              Legal, Privacy & DPDP
+            </h3>
+            <p className="text-xs text-[#64748B] mt-1">
+              Privacy Policy, Terms of Service, DPDP Act (India) and Data Principal rights.
+            </p>
+          </div>
+          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-[#1D5FF0]">
+            <span>View Disclosures</span>
             <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
           </div>
         </div>
@@ -692,6 +719,12 @@ export const SettingsScreen: React.FC = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Legal & DPDP Compliance Modal */}
+      <LegalModal
+        isOpen={activeModal === 'legal'}
+        onClose={() => setActiveModal(null)}
+      />
 
     </div>
   );

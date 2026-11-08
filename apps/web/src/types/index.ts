@@ -110,6 +110,7 @@ export interface FolderItem {
 }
 
 export type TabScreen = 
+  | 'landing'
   | 'overview'
   | 'home'
   | 'documents' 

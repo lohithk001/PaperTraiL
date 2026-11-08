@@ -96,8 +96,8 @@ const AuthBridge: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     if (!isClerkConfigured || !isLoaded) return;
 
     if (isSignedIn) {
-      // Transition from auth to appropriate screen on sign-in
-      if (activeTab === 'auth') {
+      // Transition from auth or landing to appropriate screen on sign-in
+      if (activeTab === 'auth' || activeTab === 'landing') {
         if (userProfile.onboardingCompleted) {
           setActiveTab('home');
         } else {
@@ -105,9 +105,18 @@ const AuthBridge: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         }
       }
     } else {
-      // Transition to auth or onboarding when signed out
-      if (activeTab !== 'auth' && activeTab !== 'splash' && activeTab !== 'onboarding') {
-        setActiveTab('auth');
+      // Transition when signed out:
+      // Mobile platform / viewport goes directly to auth (no landing page)
+      // Web view defaults to the landing page
+      const isMobile = isNative || (typeof window !== 'undefined' && window.innerWidth < 768);
+      if (isMobile) {
+        if (activeTab !== 'auth' && activeTab !== 'splash') {
+          setActiveTab('auth');
+        }
+      } else {
+        if (activeTab !== 'auth' && activeTab !== 'landing') {
+          setActiveTab('landing');
+        }
       }
     }
   }, [isLoaded, isSignedIn, activeTab, userProfile.onboardingCompleted, setActiveTab]);
@@ -152,7 +161,8 @@ const AuthBridge: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       if (isClerkConfigured && clerkSignOut) {
         await clerkSignOut();
       }
-      setActiveTab('auth');
+      const isMobile = isNative || (typeof window !== 'undefined' && window.innerWidth < 768);
+      setActiveTab(isMobile ? 'auth' : 'landing');
     },
   }), [isSignedIn, isLoaded, getToken, clerkSignOut, setActiveTab]);
 

@@ -158,6 +158,11 @@ export class AuthGuard implements CanActivate {
     }
 
     // Fallback when CLERK_SECRET_KEY is not yet provisioned in environment
+    if (process.env.NODE_ENV === 'production') {
+      throw new UnauthorizedException('Server authentication provider is not configured for production');
+    }
+
+    this.logger.warn('CLERK_SECRET_KEY is not set: falling back to mock user in non-production environment');
     request.user = {
       id: 'user-demo-id',
       clerkId: 'clerk_authenticated_user',

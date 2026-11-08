@@ -7,6 +7,8 @@ import { StorageModule } from './storage/storage.module';
 import { DocumentsModule } from './documents/documents.module';
 import { RemindersModule } from './reminders/reminders.module';
 import { OcrModule } from './ocr/ocr.module';
+import { CryptoModule } from './crypto/crypto.module';
+import { HealthModule } from './health/health.module';
 import { FoldersController } from './folders/folders.controller';
 import { NotificationsController } from './notifications/notifications.controller';
 import { SharingController } from './sharing/sharing.controller';
@@ -21,6 +23,8 @@ import { SharingController } from './sharing/sharing.controller';
       },
     ]),
     PrismaModule,
+    CryptoModule,
+    HealthModule,
     AuthModule,
     StorageModule,
     DocumentsModule,

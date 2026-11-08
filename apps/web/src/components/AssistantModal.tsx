@@ -107,22 +107,22 @@ export const AssistantModal: React.FC = () => {
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-charcoal-900/60 backdrop-blur-sm">
+      <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm">
         <motion.div
           initial={{ opacity: 0, y: 100 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 100 }}
           transition={{ type: 'spring', damping: 28, stiffness: 350 }}
-          className="w-full max-w-md bg-[#F7F7F7] rounded-t-[36px] sm:rounded-[36px] h-[85vh] flex flex-col overflow-hidden shadow-2xl border border-charcoal-200"
+          className="w-full max-w-md bg-[#F8F9FA] rounded-t-[36px] sm:rounded-[36px] h-[85vh] flex flex-col overflow-hidden shadow-2xl border border-[#E2E8F0]"
         >
           {/* Header */}
-          <div className="px-6 py-4 bg-white border-b border-charcoal-200/80 flex items-center justify-between">
+          <div className="px-6 py-4 bg-white border-b border-[#E2E8F0] flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-primary to-cyan-400 text-white flex items-center justify-center shadow-xs">
+              <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-[#1D5FF0] to-cyan-400 text-white flex items-center justify-center shadow-xs">
                 <Sparkles className="w-4 h-4" />
               </div>
               <div>
-                <h3 className="text-sm font-extrabold text-charcoal-900 tracking-tight">
+                <h3 className="text-sm font-extrabold text-[#0F172A] tracking-tight">
                   PaperTrail Assistant
                 </h3>
                 <span className="text-[11px] font-semibold text-emerald-600 flex items-center gap-1">
@@ -134,7 +134,7 @@ export const AssistantModal: React.FC = () => {
 
             <button
               onClick={() => setIsAssistantOpen(false)}
-              className="w-8 h-8 rounded-full bg-neutral-100 hover:bg-neutral-200 flex items-center justify-center text-charcoal-700 active:scale-95 transition-all"
+              className="w-8 h-8 rounded-full bg-[#F1F5F9] hover:bg-[#E2E8F0] flex items-center justify-center text-[#475569] active:scale-95 transition-all cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
@@ -152,8 +152,8 @@ export const AssistantModal: React.FC = () => {
                 <div
                   className={`max-w-[85%] p-3.5 rounded-2.5xl text-xs font-medium leading-relaxed ${
                     m.sender === 'user'
-                      ? 'bg-primary text-white rounded-br-xs shadow-xs'
-                      : 'bg-white text-charcoal-800 border border-charcoal-200/80 rounded-bl-xs shadow-xs'
+                      ? 'bg-[#1D5FF0] text-white rounded-br-xs shadow-xs'
+                      : 'bg-white text-[#1E293B] border border-[#E2E8F0] rounded-bl-xs shadow-xs'
                   }`}
                 >
                   {m.text}
@@ -167,7 +167,7 @@ export const AssistantModal: React.FC = () => {
                           setIsAssistantOpen(false);
                         }
                       }}
-                      className="mt-2.5 w-full py-2 px-3 rounded-xl bg-blue-50 hover:bg-blue-100 border border-blue-200/80 text-primary font-bold text-[11px] flex items-center justify-between transition-colors"
+                      className="mt-2.5 w-full py-2 px-3 rounded-xl bg-blue-50 hover:bg-blue-100 border border-blue-200/80 text-[#1D5FF0] font-bold text-[11px] flex items-center justify-between transition-colors cursor-pointer"
                     >
                       <div className="flex items-center gap-1.5">
                         <FileText className="w-3.5 h-3.5" />
@@ -182,13 +182,13 @@ export const AssistantModal: React.FC = () => {
           </div>
 
           {/* Quick Prompts */}
-          <div className="px-4 py-2 overflow-x-auto no-scrollbar border-t border-charcoal-200/60 bg-white/70">
+          <div className="px-4 py-2 overflow-x-auto no-scrollbar border-t border-[#E2E8F0] bg-white/70">
             <div className="flex items-center gap-2 min-w-max">
               {quickPrompts.map((p, idx) => (
                 <button
                   key={idx}
                   onClick={() => handleSend(p)}
-                  className="px-3 py-1.5 rounded-full bg-white hover:bg-neutral-100 border border-charcoal-200 text-[11px] font-bold text-charcoal-700 active:scale-95 transition-all"
+                  className="px-3 py-1.5 rounded-full bg-white hover:bg-[#F1F5F9] border border-[#E2E8F0] text-[11px] font-bold text-[#475569] active:scale-95 transition-all cursor-pointer"
                 >
                   {p}
                 </button>
@@ -197,18 +197,18 @@ export const AssistantModal: React.FC = () => {
           </div>
 
           {/* Input Bar */}
-          <div className="p-3 bg-white border-t border-charcoal-200 flex items-center gap-2">
+          <div className="p-3 bg-white border-t border-[#E2E8F0] flex items-center gap-2">
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSend()}
               placeholder="Ask PaperTrail about any document..."
-              className="flex-1 px-4 py-2.5 rounded-full bg-neutral-100 text-xs font-medium text-charcoal-900 placeholder:text-charcoal-400 focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="flex-1 px-4 py-2.5 rounded-full bg-[#F1F5F9] text-xs font-medium text-[#0F172A] placeholder:text-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#1D5FF0]/20"
             />
             <button
               onClick={() => handleSend()}
-              className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center hover:bg-primary-hover active:scale-90 transition-all shadow-xs"
+              className="w-10 h-10 rounded-full bg-[#1D5FF0] text-white flex items-center justify-center hover:bg-[#174FCB] active:scale-90 transition-all shadow-xs cursor-pointer"
             >
               <Send className="w-4 h-4 stroke-[2]" />
             </button>

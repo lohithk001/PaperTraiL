@@ -1,161 +1,86 @@
 import React from 'react';
-import { motion } from 'framer-motion';
-import { 
-  Home, 
-  Files, 
-  Folder, 
-  Upload, 
-  Calendar, 
-  Settings 
-} from 'lucide-react';
+import { Home, Files, Plus, Calendar, Settings } from 'lucide-react';
 import { useDocumentContext } from '../context/DocumentContext';
 import { TabScreen } from '../types';
+import { cn } from '../lib/utils';
 
 export const BottomNav: React.FC = () => {
   const { activeTab, setActiveTab, setIsUploadModalOpen } = useDocumentContext();
 
   // Hide BottomNav on full-screen flows
-  const hiddenTabs: TabScreen[] = ['splash', 'onboarding', 'auth', 'scan'];
+  const hiddenTabs: TabScreen[] = ['splash', 'onboarding', 'auth', 'landing', 'scan'];
   if (hiddenTabs.includes(activeTab)) {
     return null;
   }
 
   const isNavActive = (tab: string) => {
     if (tab === 'home') return activeTab === 'home' || activeTab === 'overview';
-    if (tab === 'folders') return activeTab === 'folders' || activeTab === 'categories';
+    if (tab === 'documents') return activeTab === 'documents' || activeTab === 'document-detail';
     return activeTab === tab;
   };
 
   return (
-    <div className="fixed bottom-4 left-0 right-0 z-50 flex justify-center px-3 pointer-events-none safe-bottom select-none">
-      <nav className="pointer-events-auto bg-[#F2ECE2]/95 backdrop-blur-xl border border-[#E8DFD3] shadow-xl rounded-full px-2.5 py-1.5 flex items-center gap-1.5 sm:gap-2.5 select-none">
+    <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-white/95 backdrop-blur-md border-t border-[#E6E6E0] safe-bottom select-none">
+      <nav className="flex items-center justify-around px-2 py-1.5 h-16 max-w-lg mx-auto">
         
-        {/* Tab 1: Home */}
-        <div className="relative">
-          {isNavActive('home') ? (
-            <motion.button
-              layoutId="bentoBottomActive"
-              onClick={() => setActiveTab('home')}
-              className="w-11 h-11 rounded-full bg-[#111827] text-white flex items-center justify-center shadow-md cursor-pointer"
-              transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-              title="Home Dashboard"
-            >
-              <Home className="w-5 h-5 stroke-[2.2]" />
-            </motion.button>
-          ) : (
-            <button
-              onClick={() => setActiveTab('home')}
-              className="w-11 h-11 rounded-full text-[#57534E] hover:text-[#111827] hover:bg-black/5 flex items-center justify-center transition-all cursor-pointer"
-              title="Home Dashboard"
-            >
-              <Home className="w-5 h-5 stroke-[1.8]" />
-            </button>
+        {/* 1: Home */}
+        <button
+          onClick={() => setActiveTab('home')}
+          className={cn(
+            'flex flex-col items-center justify-center flex-1 h-full py-1 transition-colors cursor-pointer',
+            isNavActive('home') ? 'text-[#1D5FF0]' : 'text-[#6B6E66] hover:text-[#20211F]'
           )}
-        </div>
+        >
+          <Home className="w-5 h-5" strokeWidth={isNavActive('home') ? 2.2 : 1.75} />
+          <span className="text-[11px] font-medium mt-1">Home</span>
+        </button>
 
-        {/* Tab 2: Documents */}
-        <div className="relative">
-          {isNavActive('documents') ? (
-            <motion.button
-              layoutId="bentoBottomActive"
-              onClick={() => setActiveTab('documents')}
-              className="w-11 h-11 rounded-full bg-[#111827] text-white flex items-center justify-center shadow-md cursor-pointer"
-              transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-              title="All Documents"
-            >
-              <Files className="w-5 h-5 stroke-[2.2]" />
-            </motion.button>
-          ) : (
-            <button
-              onClick={() => setActiveTab('documents')}
-              className="w-11 h-11 rounded-full text-[#57534E] hover:text-[#111827] hover:bg-black/5 flex items-center justify-center transition-all cursor-pointer"
-              title="All Documents"
-            >
-              <Files className="w-5 h-5 stroke-[1.8]" />
-            </button>
+        {/* 2: Documents */}
+        <button
+          onClick={() => setActiveTab('documents')}
+          className={cn(
+            'flex flex-col items-center justify-center flex-1 h-full py-1 transition-colors cursor-pointer',
+            isNavActive('documents') ? 'text-[#1D5FF0]' : 'text-[#6B6E66] hover:text-[#20211F]'
           )}
-        </div>
+        >
+          <Files className="w-5 h-5" strokeWidth={isNavActive('documents') ? 2.2 : 1.75} />
+          <span className="text-[11px] font-medium mt-1">Docs</span>
+        </button>
 
-        {/* Tab 3: Raised Center Upload Action with Coral/Pink Pip */}
-        <div className="relative px-0.5">
+        {/* 3: Center Upload Action */}
+        <div className="flex-1 flex justify-center items-center">
           <button
             onClick={() => setIsUploadModalOpen(true)}
-            className="w-12 h-12 rounded-[18px] bg-white hover:bg-white/90 text-[#374151] hover:text-[#111827] flex items-center justify-center shadow-md border border-[#E8DFD3] transition-all cursor-pointer transform -translate-y-1 active:scale-95"
+            className="w-11 h-11 rounded-2xl bg-[#1D5FF0] hover:bg-[#174FCB] text-white flex items-center justify-center shadow-md active:scale-95 transition-transform cursor-pointer -mt-3"
             title="Upload Document"
           >
-            <Upload className="w-5 h-5 stroke-[2]" />
+            <Plus className="w-6 h-6" strokeWidth={2.5} />
           </button>
-          <span className="absolute top-0 right-1 w-2.5 h-2.5 rounded-full bg-[#FF6B6B] ring-2 ring-[#F2ECE2]"></span>
         </div>
 
-        {/* Tab 4: Vault Folders */}
-        <div className="relative">
-          {isNavActive('folders') ? (
-            <motion.button
-              layoutId="bentoBottomActive"
-              onClick={() => setActiveTab('folders')}
-              className="w-11 h-11 rounded-full bg-[#111827] text-white flex items-center justify-center shadow-md cursor-pointer"
-              transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-              title="Vault Folders"
-            >
-              <Folder className="w-5 h-5 stroke-[2.2]" />
-            </motion.button>
-          ) : (
-            <button
-              onClick={() => setActiveTab('folders')}
-              className="w-11 h-11 rounded-full text-[#57534E] hover:text-[#111827] hover:bg-black/5 flex items-center justify-center transition-all cursor-pointer"
-              title="Vault Folders"
-            >
-              <Folder className="w-5 h-5 stroke-[1.8]" />
-            </button>
+        {/* 4: Reminders */}
+        <button
+          onClick={() => setActiveTab('reminders')}
+          className={cn(
+            'flex flex-col items-center justify-center flex-1 h-full py-1 transition-colors cursor-pointer',
+            isNavActive('reminders') ? 'text-[#1D5FF0]' : 'text-[#6B6E66] hover:text-[#20211F]'
           )}
-        </div>
+        >
+          <Calendar className="w-5 h-5" strokeWidth={isNavActive('reminders') ? 2.2 : 1.75} />
+          <span className="text-[11px] font-medium mt-1">Reminders</span>
+        </button>
 
-        {/* Tab 5: Reminders */}
-        <div className="relative">
-          {isNavActive('reminders') ? (
-            <motion.button
-              layoutId="bentoBottomActive"
-              onClick={() => setActiveTab('reminders')}
-              className="w-11 h-11 rounded-full bg-[#111827] text-white flex items-center justify-center shadow-md cursor-pointer"
-              transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-              title="Lifecycle Reminders"
-            >
-              <Calendar className="w-5 h-5 stroke-[2.2]" />
-            </motion.button>
-          ) : (
-            <button
-              onClick={() => setActiveTab('reminders')}
-              className="w-11 h-11 rounded-full text-[#57534E] hover:text-[#111827] hover:bg-black/5 flex items-center justify-center transition-all cursor-pointer"
-              title="Lifecycle Reminders"
-            >
-              <Calendar className="w-5 h-5 stroke-[1.8]" />
-            </button>
+        {/* 5: Settings */}
+        <button
+          onClick={() => setActiveTab('settings')}
+          className={cn(
+            'flex flex-col items-center justify-center flex-1 h-full py-1 transition-colors cursor-pointer',
+            isNavActive('settings') ? 'text-[#1D5FF0]' : 'text-[#6B6E66] hover:text-[#20211F]'
           )}
-        </div>
-
-        {/* Tab 6: Settings */}
-        <div className="relative">
-          {isNavActive('settings') ? (
-            <motion.button
-              layoutId="bentoBottomActive"
-              onClick={() => setActiveTab('settings')}
-              className="w-11 h-11 rounded-full bg-[#111827] text-white flex items-center justify-center shadow-md cursor-pointer"
-              transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-              title="Settings & Preferences"
-            >
-              <Settings className="w-5 h-5 stroke-[2.2]" />
-            </motion.button>
-          ) : (
-            <button
-              onClick={() => setActiveTab('settings')}
-              className="w-11 h-11 rounded-full text-[#57534E] hover:text-[#111827] hover:bg-black/5 flex items-center justify-center transition-all cursor-pointer"
-              title="Settings & Preferences"
-            >
-              <Settings className="w-5 h-5 stroke-[1.8]" />
-            </button>
-          )}
-        </div>
+        >
+          <Settings className="w-5 h-5" strokeWidth={isNavActive('settings') ? 2.2 : 1.75} />
+          <span className="text-[11px] font-medium mt-1">Settings</span>
+        </button>
 
       </nav>
     </div>
