@@ -58,12 +58,12 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
               <h3 className={cn(
-                'font-semibold text-[#20211F] truncate',
+                'font-semibold text-[#1E201D] truncate',
                 compact ? 'text-sm' : 'text-sm',
               )}>
                 {doc.title}
               </h3>
-              <p className="text-xs text-[#9B9E96] mt-0.5 truncate">
+              <p className="text-xs text-[#646860] mt-0.5 truncate">
                 {doc.issuer || doc.category}
                 {doc.issueDate && ` • ${doc.issueDate}`}
               </p>
@@ -73,7 +73,7 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
             {onAction && (
               <button
                 onClick={onAction}
-                className="shrink-0 w-7 h-7 rounded-lg flex items-center justify-center text-[#9B9E96] hover:text-[#20211F] hover:bg-[#F0F0EA] transition-colors opacity-0 group-hover:opacity-100"
+                className="shrink-0 w-7 h-7 rounded-lg flex items-center justify-center text-[#646860] hover:text-[#20211F] hover:bg-[#F0F0EA] transition-colors opacity-0 group-hover:opacity-100"
                 aria-label="Document actions"
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
@@ -99,7 +99,7 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
               )}
 
               {doc.isFavorite && (
-                <span className="text-xs text-[#9B9E96]">★ Starred</span>
+                <span className="text-xs font-medium text-[#D97706]">★ Starred</span>
               )}
             </div>
           )}
@@ -109,11 +109,11 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
       {/* File info row */}
       {!compact && (
         <div className="flex items-center gap-2 mt-3 pt-3 border-t border-[#F0F0EA]">
-          <span className="text-xs font-mono font-medium text-[#9B9E96] uppercase">
+          <span className="text-xs font-mono font-bold text-[#4A4E46] uppercase">
             {doc.fileType}
           </span>
-          <span className="text-[#E6E6E0]">·</span>
-          <span className="text-xs text-[#9B9E96]">
+          <span className="text-[#CFCFC8]">·</span>
+          <span className="text-xs text-[#646860] tabular-nums">
             {doc.fileSize || '—'}
           </span>
         </div>

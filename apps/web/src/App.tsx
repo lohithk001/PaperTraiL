@@ -32,7 +32,7 @@ const HelpScreen = lazy(() => import('./screens/HelpScreen').then(m => ({ defaul
 const ScreenLoader = () => (
   <div className="flex flex-col items-center justify-center min-h-[50vh] p-8 space-y-4">
     <div className="w-10 h-10 border-3 border-[#1D5FF0]/20 border-t-[#1D5FF0] rounded-full animate-spin" />
-    <span className="text-xs font-medium text-[#9B9E96]">Loading vault interface...</span>
+    <span className="text-xs font-medium text-[#646860]">Loading vault interface...</span>
   </div>
 );
 

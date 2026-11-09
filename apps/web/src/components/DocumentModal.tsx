@@ -135,23 +135,27 @@ Encrypted With: AES-256 PaperTrail Vault`;
       return {
         label: 'Expired',
         colorClass: 'text-[#DC2626]',
+        bgClass: 'bg-[#FEF2F2] border-[#FEE2E2]',
       };
     }
     if (selectedDocument.daysLeft !== null && selectedDocument.daysLeft <= 30) {
       return {
         label: `${selectedDocument.daysLeft} days remaining`,
         colorClass: 'text-[#D97706]',
+        bgClass: 'bg-[#FFFBEB] border-[#FDE68A]',
       };
     }
     if (selectedDocument.isVerified) {
       return {
         label: 'Active & Verified',
         colorClass: 'text-[#16A34A]',
+        bgClass: 'bg-[#ECFDF5] border-[#A7F3D0]',
       };
     }
     return {
       label: 'Active & Protected',
       colorClass: 'text-[#1D5FF0]',
+      bgClass: 'bg-[#EFF6FF] border-[#BFDBFE]',
     };
   };
 
@@ -270,16 +274,18 @@ Encrypted With: AES-256 PaperTrail Vault`;
                 }}
               />
 
-              {/* Zoom control toggle */}
-              <div className="absolute top-4 right-4 z-20 flex items-center gap-1.5">
-                <button
-                  onClick={() => setZoom((z) => (z === 1 ? 1.35 : 1))}
-                  className="p-2 rounded-full bg-black/40 backdrop-blur-md hover:bg-black/60 text-white active:scale-90 transition-all cursor-pointer border border-white/10 shadow-sm"
-                  title="Toggle zoom level"
-                >
-                  {zoom > 1 ? <ZoomOut className="w-3.5 h-3.5" /> : <ZoomIn className="w-3.5 h-3.5" />}
-                </button>
-              </div>
+              {/* Zoom control toggle - visible only when inspecting document image */}
+              {isImage && selectedDocument.fileUrl && viewMode === 'preview' && (
+                <div className="absolute top-4 right-4 z-20 flex items-center gap-1.5">
+                  <button
+                    onClick={() => setZoom((z) => (z === 1 ? 1.5 : 1))}
+                    className="p-2 rounded-full bg-black/50 backdrop-blur-md hover:bg-black/75 text-white active:scale-90 transition-all cursor-pointer border border-white/15 shadow-sm"
+                    title={zoom > 1 ? 'Zoom out' : 'Zoom in'}
+                  >
+                    {zoom > 1 ? <ZoomOut className="w-3.5 h-3.5" /> : <ZoomIn className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
+              )}
 
               {/* Actual Image preview display */}
               {isImage && selectedDocument.fileUrl && viewMode === 'preview' ? (
@@ -296,14 +302,7 @@ Encrypted With: AES-256 PaperTrail Vault`;
                 </div>
               ) : (
                 /* Encrypted Vault Security Certificate Card */
-                <div 
-                  className="relative z-10 p-6 flex flex-col justify-between flex-1"
-                  style={{
-                    transform: `scale(${zoom})`,
-                    transformOrigin: 'top left',
-                    transition: 'transform 0.25s ease-out'
-                  }}
-                >
+                <div className="relative z-10 p-6 flex flex-col justify-between flex-1">
                   {/* Top Seal info */}
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#1D5FF0] to-[#0B40BA] text-white flex items-center justify-center font-bold text-sm shadow-md shadow-blue-500/25 shrink-0">
@@ -435,9 +434,12 @@ Encrypted With: AES-256 PaperTrail Vault`;
                     <span className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider block">
                       Status
                     </span>
-                    <span className={`font-bold text-sm mt-1 block ${statusInfo.colorClass}`}>
-                      {statusInfo.label}
-                    </span>
+                    <div className="mt-1 flex items-center">
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${statusInfo.colorClass} ${statusInfo.bgClass}`}>
+                        <span className="w-1.5 h-1.5 rounded-full bg-current"></span>
+                        {statusInfo.label}
+                      </span>
+                    </div>
                   </div>
                 </div>
 

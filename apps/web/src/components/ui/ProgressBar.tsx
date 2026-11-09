@@ -24,7 +24,7 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
   return (
     <div className={cn('space-y-1', className)}>
       {label && (
-        <div className="flex items-center justify-between text-xs text-[#9B9E96]">
+        <div className="flex items-center justify-between text-xs text-[#646860]">
           <span>{label}</span>
           <span>{Math.round(pct)}%</span>
         </div>

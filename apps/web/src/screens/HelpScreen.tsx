@@ -93,7 +93,7 @@ export const HelpScreen: React.FC = () => {
                   className="w-full flex items-center justify-between text-left text-xs sm:text-sm font-semibold text-[#20211F] hover:text-[#1D5FF0] transition-colors cursor-pointer gap-4"
                 >
                   <span>{faq.q}</span>
-                  <ChevronDown className={`w-4 h-4 text-[#9B9E96] shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`w-4 h-4 text-[#646860] shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
                 </button>
                 {isOpen && (
                   <p className="text-xs text-[#6B6E66] mt-2 leading-relaxed">

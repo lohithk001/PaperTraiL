@@ -24,15 +24,20 @@ export const AssistantModal: React.FC = () => {
     isAssistantOpen, 
     setIsAssistantOpen, 
     documents, 
-    setSelectedDocument 
+    setSelectedDocument,
+    setActiveDocumentDetail,
+    setActiveTab,
+    userProfile
   } = useDocumentContext();
+
+  const firstName = userProfile?.name?.split(' ')[0] || 'there';
 
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: 'msg-1',
       sender: 'assistant',
-      text: 'Hi Lohith! I am your PaperTrail AI Vault Assistant. You can ask me about expiring documents, policies, or request instant lookups.',
+      text: `Hi ${firstName}! I am your PaperTrail Vault Assistant. You can ask me about expiring documents, policies, or request instant lookups.`,
     },
   ]);
 
@@ -164,6 +169,8 @@ export const AssistantModal: React.FC = () => {
                         const doc = documents.find((d) => d.id === m.matchedDocId);
                         if (doc) {
                           setSelectedDocument(doc);
+                          setActiveDocumentDetail(doc);
+                          setActiveTab('document-detail');
                           setIsAssistantOpen(false);
                         }
                       }}

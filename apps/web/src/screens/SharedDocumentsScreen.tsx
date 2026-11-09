@@ -95,7 +95,7 @@ export const SharedDocumentsScreen: React.FC = () => {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs min-w-[700px]">
               <thead>
-                <tr className="border-b border-[#E6E6E0] text-[#9B9E96] font-semibold text-[11px] bg-[#F6F6F2]">
+                <tr className="border-b border-[#E6E6E0] text-[#646860] font-semibold text-[11px] bg-[#F6F6F2]">
                   <th className="py-3 px-5">Document</th>
                   <th className="py-3 px-4">Recipient</th>
                   <th className="py-3 px-4">Permission</th>
@@ -117,7 +117,7 @@ export const SharedDocumentsScreen: React.FC = () => {
                           <CategoryIcon category={share.category} size="sm" />
                           <div>
                             <p className="font-semibold text-[#20211F]">{share.documentTitle}</p>
-                            <span className="text-[11px] text-[#9B9E96]">{share.fileSize} • {share.category}</span>
+                            <span className="text-[11px] text-[#646860]">{share.fileSize} • {share.category}</span>
                           </div>
                         </div>
                       </td>
@@ -125,7 +125,7 @@ export const SharedDocumentsScreen: React.FC = () => {
                       <td className="py-3.5 px-4">
                         <div>
                           <p className="font-medium text-[#20211F]">{share.recipientName}</p>
-                          <p className="text-[11px] text-[#9B9E96]">{share.recipientEmail}</p>
+                          <p className="text-[11px] text-[#646860]">{share.recipientEmail}</p>
                         </div>
                       </td>
 
@@ -205,7 +205,7 @@ export const SharedDocumentsScreen: React.FC = () => {
                 <button 
                   type="button" 
                   onClick={() => setIsShareModalOpen(false)}
-                  className="p-1 rounded-lg text-[#9B9E96] hover:text-[#20211F]"
+                  className="p-1 rounded-lg text-[#646860] hover:text-[#20211F]"
                 >
                   <X className="w-4 h-4" />
                 </button>

@@ -27,6 +27,7 @@ import { triggerConfetti } from '../components/Confetti';
 import { useVaultAuth } from '../auth/ClerkAuthProvider';
 import { ReminderPreferences } from '../types';
 import { LegalModal } from '../components/LegalModal';
+import { ConfirmDialog, toast } from '../components/ui';
 
 const CATEGORIES_LIST = [
   'Identity',
@@ -63,10 +64,11 @@ export const SettingsScreen: React.FC = () => {
   } = useDocumentContext();
   const { signOut } = useVaultAuth();
 
-  const handleLogout = async () => {
-    if (confirm('Lock vault and sign out of your session?')) {
-      await signOut();
-    }
+  const [showSignoutConfirm, setShowSignoutConfirm] = useState(false);
+  const [showRelaunchConfirm, setShowRelaunchConfirm] = useState(false);
+
+  const handleLogout = () => {
+    setShowSignoutConfirm(true);
   };
 
   const [activeModal, setActiveModal] = useState<string | null>(null);
@@ -121,11 +123,8 @@ export const SettingsScreen: React.FC = () => {
     setActiveModal(null);
   };
 
-  const handleRelaunchOnboarding = async () => {
-    if (confirm('Would you like to review the PaperTrail onboarding journey? Your documents will remain safe.')) {
-      await saveOnboardingStep(1);
-      setActiveTab('onboarding');
-    }
+  const handleRelaunchOnboarding = () => {
+    setShowRelaunchConfirm(true);
   };
 
   const toggleCategory = (cat: string) => {
@@ -724,6 +723,37 @@ export const SettingsScreen: React.FC = () => {
       <LegalModal
         isOpen={activeModal === 'legal'}
         onClose={() => setActiveModal(null)}
+      />
+
+      {/* Lock Vault & Sign Out In-App Confirmation */}
+      <ConfirmDialog
+        open={showSignoutConfirm}
+        onClose={() => setShowSignoutConfirm(false)}
+        onConfirm={async () => {
+          setShowSignoutConfirm(false);
+          await signOut();
+          toast.success('Signed out', 'Vault locked successfully.');
+        }}
+        title="Lock Vault & Sign Out"
+        description="Are you sure you want to lock your PaperTrail vault and sign out of this session?"
+        confirmLabel="Lock & Sign Out"
+        variant="danger"
+      />
+
+      {/* Relaunch Onboarding In-App Confirmation */}
+      <ConfirmDialog
+        open={showRelaunchConfirm}
+        onClose={() => setShowRelaunchConfirm(false)}
+        onConfirm={async () => {
+          setShowRelaunchConfirm(false);
+          await saveOnboardingStep(1);
+          setActiveTab('onboarding');
+          toast.success('Onboarding restarted', 'Your stored documents and settings remain safe.');
+        }}
+        title="Review Onboarding"
+        description="Would you like to review the PaperTrail onboarding journey? Your stored vault documents will remain completely safe."
+        confirmLabel="Restart Onboarding"
+        variant="primary"
       />
 
     </div>

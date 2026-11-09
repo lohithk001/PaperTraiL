@@ -172,7 +172,7 @@ export const LandingScreen: React.FC = () => {
                 <span className="w-2.5 h-2.5 rounded-full bg-[#16A34A]" />
                 <span className="font-semibold text-[#20211F]">Encrypted Vault Preview</span>
               </div>
-              <span className="font-medium text-[#9B9E96]">Zero-Knowledge AES-256</span>
+              <span className="font-medium text-[#646860]">Zero-Knowledge AES-256</span>
             </div>
 
             {/* Mock Document Rows */}
@@ -184,7 +184,7 @@ export const LandingScreen: React.FC = () => {
                 </div>
                 <div>
                   <h4 className="text-xs font-semibold text-[#20211F]">International Passport</h4>
-                  <p className="text-[11px] text-[#9B9E96] mt-0.5">Government of India • Exp: 2032</p>
+                  <p className="text-[11px] text-[#646860] mt-0.5">Government of India • Exp: 2032</p>
                 </div>
               </div>
 
@@ -195,7 +195,7 @@ export const LandingScreen: React.FC = () => {
                 </div>
                 <div>
                   <h4 className="text-xs font-semibold text-[#20211F]">Comprehensive Motor Policy</h4>
-                  <p className="text-[11px] text-[#9B9E96] mt-0.5">HDFC ERGO • Policy #481920</p>
+                  <p className="text-[11px] text-[#646860] mt-0.5">HDFC ERGO • Policy #481920</p>
                 </div>
               </div>
 
@@ -206,7 +206,7 @@ export const LandingScreen: React.FC = () => {
                 </div>
                 <div>
                   <h4 className="text-xs font-semibold text-[#20211F]">B.Tech Degree Certificate</h4>
-                  <p className="text-[11px] text-[#9B9E96] mt-0.5">IIT Madras • Added 2024</p>
+                  <p className="text-[11px] text-[#646860] mt-0.5">IIT Madras • Added 2024</p>
                 </div>
               </div>
             </div>
@@ -289,7 +289,7 @@ export const LandingScreen: React.FC = () => {
               >
                 <CategoryIcon category={c.name} size="sm" />
                 <h4 className="text-xs font-semibold text-[#20211F]">{c.name}</h4>
-                <p className="text-[11px] text-[#9B9E96]">{c.desc}</p>
+                <p className="text-[11px] text-[#646860]">{c.desc}</p>
               </div>
             ))}
           </div>
@@ -333,7 +333,7 @@ export const LandingScreen: React.FC = () => {
       </section>
 
       {/* 6. FOOTER */}
-      <footer className="py-8 bg-[#F6F6F2] border-t border-[#E6E6E0] text-xs text-[#9B9E96]">
+      <footer className="py-8 bg-[#F6F6F2] border-t border-[#E6E6E0] text-xs text-[#646860]">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <span className="font-semibold text-[#20211F]">PaperTraiL Vault</span>

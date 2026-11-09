@@ -172,7 +172,7 @@ export const RemindersScreen: React.FC = () => {
                 <CategoryIcon category={rem.category} size="sm" />
 
                 <div className="min-w-0">
-                  <h3 className={`text-sm font-semibold text-[#20211F] truncate ${rem.isCompleted ? 'line-through text-[#9B9E96]' : ''}`}>
+                  <h3 className={`text-sm font-semibold text-[#20211F] truncate ${rem.isCompleted ? 'line-through text-[#646860]' : ''}`}>
                     {rem.title}
                   </h3>
                   <div className="flex items-center gap-2 mt-0.5 text-xs text-[#6B6E66]">
@@ -198,7 +198,7 @@ export const RemindersScreen: React.FC = () => {
 
                 <button
                   onClick={() => deleteReminder(rem.id)}
-                  className="p-1.5 rounded-lg text-[#9B9E96] hover:text-[#DC2626] hover:bg-[#FEE2E2] transition-colors cursor-pointer"
+                  className="p-1.5 rounded-lg text-[#646860] hover:text-[#DC2626] hover:bg-[#FEE2E2] transition-colors cursor-pointer"
                   title="Delete Reminder"
                 >
                   <Trash2 className="w-4 h-4" />
@@ -236,7 +236,7 @@ export const RemindersScreen: React.FC = () => {
                 <button 
                   type="button" 
                   onClick={() => setIsAddOpen(false)}
-                  className="p-1 rounded-lg text-[#9B9E96] hover:text-[#20211F]"
+                  className="p-1 rounded-lg text-[#646860] hover:text-[#20211F]"
                 >
                   <X className="w-4 h-4" />
                 </button>

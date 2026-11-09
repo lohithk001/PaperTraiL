@@ -87,7 +87,7 @@ export const BentoRightRail: React.FC = () => {
         <h2 className="text-base font-semibold text-[#20211F] tracking-tight mt-3">
           {userProfile.name || 'Vault Owner'}
         </h2>
-        <p className="text-xs text-[#9B9E96] mt-0.5">
+        <p className="text-xs text-[#646860] mt-0.5">
           {userProfile.email || 'Personal Sovereign Archive'}
         </p>
 
@@ -101,7 +101,7 @@ export const BentoRightRail: React.FC = () => {
       <div className="bg-[#F6F6F2] rounded-2xl p-4 border border-[#E6E6E0] space-y-3">
         <div className="flex items-center justify-between text-xs">
           <span className="font-medium text-[#6B6E66] flex items-center gap-1.5">
-            <HardDrive className="w-3.5 h-3.5 text-[#9B9E96]" />
+            <HardDrive className="w-3.5 h-3.5 text-[#646860]" />
             Vault Storage
           </span>
           <span className="font-semibold text-[#20211F]">
@@ -115,7 +115,7 @@ export const BentoRightRail: React.FC = () => {
           size="sm"
         />
 
-        <div className="flex items-center justify-between text-xs text-[#9B9E96] pt-1">
+        <div className="flex items-center justify-between text-xs text-[#646860] pt-1">
           <span>{storageStats.usedFormatted} used</span>
           <span>{storageStats.quotaFormatted} total</span>
         </div>
@@ -138,7 +138,7 @@ export const BentoRightRail: React.FC = () => {
 
         {upcomingReminders.length === 0 ? (
           <div className="p-3.5 rounded-xl bg-[#F6F6F2] border border-[#E6E6E0] text-center">
-            <p className="text-xs text-[#9B9E96]">No upcoming expirations</p>
+            <p className="text-xs text-[#646860]">No upcoming expirations</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -154,7 +154,7 @@ export const BentoRightRail: React.FC = () => {
                   </div>
                   <div className="min-w-0">
                     <p className="text-xs font-medium text-[#20211F] truncate">{rem.title}</p>
-                    <p className="text-[11px] text-[#9B9E96] truncate">{rem.documentTitle}</p>
+                    <p className="text-[11px] text-[#646860] truncate">{rem.documentTitle}</p>
                   </div>
                 </div>
 
@@ -187,7 +187,7 @@ export const BentoRightRail: React.FC = () => {
 
         {pinnedDocs.length === 0 ? (
           <div className="p-3.5 rounded-xl bg-[#F6F6F2] border border-[#E6E6E0] text-center">
-            <p className="text-xs text-[#9B9E96]">Star documents to pin them here</p>
+            <p className="text-xs text-[#646860]">Star documents to pin them here</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -203,7 +203,7 @@ export const BentoRightRail: React.FC = () => {
                     <p className="text-xs font-medium text-[#20211F] group-hover:text-[#1D5FF0] transition-colors truncate">
                       {doc.title}
                     </p>
-                    <p className="text-[11px] text-[#9B9E96] truncate">
+                    <p className="text-[11px] text-[#646860] truncate">
                       {doc.issuer || doc.category}
                     </p>
                   </div>

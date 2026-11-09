@@ -58,7 +58,7 @@ export const NotificationsModal: React.FC = () => {
               </button>
               <button
                 onClick={() => setIsNotificationsOpen(false)}
-                className="p-1 rounded-lg text-[#9B9E96] hover:text-[#20211F] hover:bg-[#F0F0EA] transition-colors cursor-pointer"
+                className="p-1 rounded-lg text-[#646860] hover:text-[#20211F] hover:bg-[#F0F0EA] transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -99,7 +99,7 @@ export const NotificationsModal: React.FC = () => {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
                       <h4 className="text-xs font-semibold truncate">{n.title}</h4>
-                      <span className="text-[10px] text-[#9B9E96] font-medium shrink-0 flex items-center gap-1">
+                      <span className="text-[10px] text-[#646860] font-medium shrink-0 flex items-center gap-1">
                         <Clock className="w-3 h-3" />
                         {n.timestamp}
                       </span>
@@ -114,7 +114,7 @@ export const NotificationsModal: React.FC = () => {
 
             {notifications.length === 0 && (
               <div className="text-center py-10">
-                <Bell className="w-8 h-8 text-[#9B9E96] mx-auto mb-2 opacity-40" />
+                <Bell className="w-8 h-8 text-[#646860] mx-auto mb-2 opacity-40" />
                 <p className="text-xs font-medium text-[#6B6E66]">No notifications</p>
               </div>
             )}

@@ -33,7 +33,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
       )}
     >
       <div className={cn(
-        'flex items-center justify-center rounded-2xl bg-[#F0F0EA] text-[#9B9E96]',
+        'flex items-center justify-center rounded-2xl bg-[#F0F0EA] text-[#646860]',
         compact ? 'w-12 h-12' : 'w-16 h-16',
       )}>
         {icon}
@@ -47,7 +47,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
           {title}
         </h3>
         {description && (
-          <p className="text-sm text-[#9B9E96] leading-relaxed">
+          <p className="text-sm text-[#646860] leading-relaxed">
             {description}
           </p>
         )}

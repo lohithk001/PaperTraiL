@@ -20,6 +20,7 @@ import {
   INITIAL_SHARED_DOCUMENTS
 } from '../data/mockData';
 import { apiClient } from '../services/apiService';
+import { isNative } from '../services/nativeService';
 
 export function formatBytes(bytes: number): string {
   if (!bytes || bytes <= 0) return '0 KB';
@@ -275,7 +276,7 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     apiClient.listDocuments()
       .then(res => {
         if (res && res.documents && res.documents.length > 0) {
-          setDocuments(res.documents);
+          setDocuments(res.documents as unknown as DocumentItem[]);
         }
       })
       .catch(() => {
@@ -490,7 +491,7 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       issuer: newDoc.issuer,
       notes: newDoc.notes,
       tags: newDoc.tags,
-      isPriority: newDoc.isPriority,
+      isPriority: Boolean(newDoc.isPriority),
     }).catch(err => {
       console.warn('Backend document sync deferred (cached locally):', err);
     });

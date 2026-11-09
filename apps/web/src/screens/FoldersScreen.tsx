@@ -82,13 +82,13 @@ export const FoldersScreen: React.FC = () => {
 
       {/* 2. Search Toolbar */}
       <div className="relative max-w-md">
-        <Search className="w-4 h-4 text-[#9B9E96] absolute left-3.5 top-1/2 -translate-y-1/2" />
+        <Search className="w-4 h-4 text-[#646860] absolute left-3.5 top-1/2 -translate-y-1/2" />
         <input
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Search folders..."
-          className="w-full h-10 pl-9 pr-4 rounded-xl bg-white border border-[#E6E6E0] text-xs text-[#20211F] placeholder:text-[#9B9E96] focus:outline-none focus:border-[#1D5FF0] transition-all shadow-xs"
+          className="w-full h-10 pl-9 pr-4 rounded-xl bg-white border border-[#E6E6E0] text-xs text-[#20211F] placeholder:text-[#646860] focus:outline-none focus:border-[#1D5FF0] transition-all shadow-xs"
         />
       </div>
 
@@ -132,7 +132,7 @@ export const FoldersScreen: React.FC = () => {
                   <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                     <button
                       onClick={(e) => handleDeleteFolder(e, folder.id, folder.name)}
-                      className="p-1.5 rounded-lg text-[#9B9E96] hover:text-[#DC2626] hover:bg-[#FEE2E2] transition-colors"
+                      className="p-1.5 rounded-lg text-[#646860] hover:text-[#DC2626] hover:bg-[#FEE2E2] transition-colors"
                       title="Delete Folder"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -174,7 +174,7 @@ export const FoldersScreen: React.FC = () => {
                 <button 
                   type="button" 
                   onClick={() => setIsAddOpen(false)}
-                  className="p-1 rounded-lg text-[#9B9E96] hover:text-[#20211F]"
+                  className="p-1 rounded-lg text-[#646860] hover:text-[#20211F]"
                 >
                   <X className="w-4 h-4" />
                 </button>

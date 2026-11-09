@@ -74,7 +74,7 @@ export const StorageScreen: React.FC = () => {
           <span className="text-[#6B6E66]">{storageStats.remainingFormatted} remaining</span>
         </div>
         <ProgressBar value={storageStats.percentUsed} color="#1D5FF0" size="md" />
-        <div className="flex items-center justify-between text-xs text-[#9B9E96]">
+        <div className="flex items-center justify-between text-xs text-[#646860]">
           <span>{storageStats.usedFormatted} used</span>
           <span>{storageStats.quotaFormatted} total quota</span>
         </div>

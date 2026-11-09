@@ -130,13 +130,13 @@ export const DocumentsScreen: React.FC = () => {
           
           {/* Search Input */}
           <div className="relative w-full sm:w-80">
-            <Search className="w-4 h-4 text-[#9B9E96] absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-[#646860] absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by title, issuer, tag..."
-              className="w-full h-9 pl-9 pr-3.5 rounded-xl bg-[#F6F6F2] border border-[#E6E6E0] text-xs text-[#20211F] placeholder:text-[#9B9E96] focus:outline-none focus:border-[#1D5FF0] focus:bg-white transition-all"
+              className="w-full h-9 pl-9 pr-3.5 rounded-xl bg-[#F6F6F2] border border-[#E6E6E0] text-xs text-[#20211F] placeholder:text-[#646860] focus:outline-none focus:border-[#1D5FF0] focus:bg-white transition-all"
             />
           </div>
 
@@ -263,7 +263,7 @@ export const DocumentsScreen: React.FC = () => {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs min-w-[650px]">
               <thead>
-                <tr className="border-b border-[#E6E6E0] text-[#9B9E96] font-semibold text-[11px] bg-[#F6F6F2]">
+                <tr className="border-b border-[#E6E6E0] text-[#646860] font-semibold text-[11px] bg-[#F6F6F2]">
                   <th className="py-3 px-5">Document</th>
                   <th className="py-3 px-4">Category</th>
                   <th className="py-3 px-4">Date Added</th>
@@ -291,7 +291,7 @@ export const DocumentsScreen: React.FC = () => {
                               <Star className="w-3 h-3 text-[#F59E0B] fill-[#F59E0B]" />
                             )}
                           </div>
-                          <span className="text-[11px] text-[#9B9E96]">
+                          <span className="text-[11px] text-[#646860]">
                             {doc.issuer || doc.policyNumber || 'Vault Item'}
                           </span>
                         </div>
@@ -314,7 +314,7 @@ export const DocumentsScreen: React.FC = () => {
                           {doc.expiryDate} {doc.isExpiringSoon && `(${doc.daysLeft}d)`}
                         </span>
                       ) : (
-                        <span className="text-[#9B9E96]">No Expiry</span>
+                        <span className="text-[#646860]">No Expiry</span>
                       )}
                     </td>
 

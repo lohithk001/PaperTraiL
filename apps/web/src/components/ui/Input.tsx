@@ -3,7 +3,7 @@ import { cn } from '../../lib/utils';
 
 // ─── INPUT ────────────────────────────────────────────────────────────────────
 
-interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'prefix'> {
   label?: string;
   hint?: string;
   error?: string;
@@ -32,7 +32,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(({
       )}
       <div className="relative flex items-center">
         {prefix && (
-          <div className="absolute left-3 text-[#9B9E96] pointer-events-none">
+          <div className="absolute left-3 text-[#646860] pointer-events-none">
             {prefix}
           </div>
         )}
@@ -40,7 +40,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(({
           ref={ref}
           id={inputId}
           className={cn(
-            'w-full h-10 bg-white border rounded-xl text-sm text-[#20211F] placeholder:text-[#9B9E96]',
+            'w-full h-10 bg-white border rounded-xl text-sm text-[#20211F] placeholder:text-[#646860]',
             'border-[#E6E6E0] focus:outline-none focus:border-[#1D5FF0] focus:ring-2 focus:ring-[#1D5FF0]/15',
             'transition-all disabled:opacity-50 disabled:bg-[#F6F6F2] disabled:cursor-not-allowed',
             prefix ? 'pl-9' : 'pl-3.5',
@@ -51,13 +51,13 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(({
           {...props}
         />
         {suffix && (
-          <div className="absolute right-3 text-[#9B9E96]">
+          <div className="absolute right-3 text-[#646860]">
             {suffix}
           </div>
         )}
       </div>
       {hint && !error && (
-        <p className="text-xs text-[#9B9E96]">{hint}</p>
+        <p className="text-xs text-[#646860]">{hint}</p>
       )}
       {error && (
         <p className="text-xs text-[#DC2626]">{error}</p>
@@ -97,7 +97,7 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(({
         ref={ref}
         id={inputId}
         className={cn(
-          'w-full bg-white border rounded-xl text-sm text-[#20211F] placeholder:text-[#9B9E96] p-3',
+          'w-full bg-white border rounded-xl text-sm text-[#20211F] placeholder:text-[#646860] p-3',
           'border-[#E6E6E0] focus:outline-none focus:border-[#1D5FF0] focus:ring-2 focus:ring-[#1D5FF0]/15',
           'transition-all resize-none disabled:opacity-50 disabled:bg-[#F6F6F2]',
           error && 'border-[#DC2626] focus:border-[#DC2626]',
@@ -105,7 +105,7 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(({
         )}
         {...props}
       />
-      {hint && !error && <p className="text-xs text-[#9B9E96]">{hint}</p>}
+      {hint && !error && <p className="text-xs text-[#646860]">{hint}</p>}
       {error && <p className="text-xs text-[#DC2626]">{error}</p>}
     </div>
   );
@@ -205,7 +205,7 @@ export const Toggle: React.FC<ToggleProps> = ({
       {(label || description) && (
         <div className="flex flex-col min-w-0">
           {label && <span className="text-sm font-medium text-[#20211F]">{label}</span>}
-          {description && <span className="text-xs text-[#9B9E96]">{description}</span>}
+          {description && <span className="text-xs text-[#646860]">{description}</span>}
         </div>
       )}
     </label>

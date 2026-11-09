@@ -19,7 +19,7 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
       <div className="flex items-center gap-2">
         <h2 className="text-sm font-semibold text-[#20211F]">{title}</h2>
         {count !== undefined && (
-          <span className="text-xs text-[#9B9E96] bg-[#F0F0EA] px-1.5 py-0.5 rounded-md font-medium">
+          <span className="text-xs text-[#646860] bg-[#F0F0EA] px-1.5 py-0.5 rounded-md font-medium">
             {count}
           </span>
         )}

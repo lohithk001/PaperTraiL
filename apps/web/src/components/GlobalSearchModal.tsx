@@ -118,12 +118,12 @@ export const GlobalSearchModal: React.FC = () => {
               }}
               onKeyDown={handleKeyDown}
               placeholder="Search documents by title, category, issuer or tags..."
-              className="flex-1 bg-transparent text-sm font-medium text-[#20211F] placeholder:text-[#9B9E96] focus:outline-none"
+              className="flex-1 bg-transparent text-sm font-medium text-[#20211F] placeholder:text-[#646860] focus:outline-none"
             />
             {query && (
               <button
                 onClick={() => setQuery('')}
-                className="p-1 rounded-lg text-[#9B9E96] hover:text-[#20211F] hover:bg-[#F0F0EA] transition-colors"
+                className="p-1 rounded-lg text-[#646860] hover:text-[#20211F] hover:bg-[#F0F0EA] transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -142,7 +142,7 @@ export const GlobalSearchModal: React.FC = () => {
             {/* Empty query: Show quick suggestions & folders */}
             {query.trim() === '' ? (
               <div className="py-4 px-2 space-y-4">
-                <p className="text-xs font-semibold uppercase tracking-wider text-[#9B9E96]">Quick Filters</p>
+                <p className="text-xs font-semibold uppercase tracking-wider text-[#646860]">Quick Filters</p>
                 <div className="flex flex-wrap gap-2">
                   {['Passport', 'Driver License', 'Health Insurance', 'Degree Certificate', 'Vehicle Registration'].map(item => (
                     <button
@@ -150,14 +150,14 @@ export const GlobalSearchModal: React.FC = () => {
                       onClick={() => setQuery(item)}
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#F6F6F2] border border-[#E6E6E0] text-xs font-medium text-[#20211F] hover:bg-[#E5EDFF] hover:text-[#1D5FF0] hover:border-[#1D5FF0]/30 transition-all cursor-pointer"
                     >
-                      <Clock className="w-3.5 h-3.5 text-[#9B9E96]" />
+                      <Clock className="w-3.5 h-3.5 text-[#646860]" />
                       <span>{item}</span>
                     </button>
                   ))}
                 </div>
 
                 <div className="pt-2">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-[#9B9E96] mb-2">Vault Folders</p>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-[#646860] mb-2">Vault Folders</p>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                     {folders.map(f => (
                       <button
@@ -168,7 +168,7 @@ export const GlobalSearchModal: React.FC = () => {
                         <CategoryIcon category={f.category} size="sm" />
                         <div className="overflow-hidden min-w-0">
                           <p className="text-xs font-semibold text-[#20211F] truncate">{f.name}</p>
-                          <p className="text-[10px] text-[#9B9E96]">{f.documentCount} docs</p>
+                          <p className="text-[10px] text-[#646860]">{f.documentCount} docs</p>
                         </div>
                       </button>
                     ))}
@@ -178,11 +178,11 @@ export const GlobalSearchModal: React.FC = () => {
             ) : totalResults === 0 ? (
               /* No matching documents */
               <div className="py-12 text-center space-y-2">
-                <div className="w-10 h-10 rounded-xl bg-[#F0F0EA] mx-auto flex items-center justify-center text-[#9B9E96]">
+                <div className="w-10 h-10 rounded-xl bg-[#F0F0EA] mx-auto flex items-center justify-center text-[#646860]">
                   <Search className="w-5 h-5" />
                 </div>
                 <h4 className="text-sm font-semibold text-[#20211F]">No documents found for "{query}"</h4>
-                <p className="text-xs text-[#9B9E96] max-w-sm mx-auto">
+                <p className="text-xs text-[#646860] max-w-sm mx-auto">
                   Try searching for a category like Education, Insurance, Vehicle or Identity.
                 </p>
               </div>
@@ -193,7 +193,7 @@ export const GlobalSearchModal: React.FC = () => {
                 {/* Documents section */}
                 {matchingDocuments.length > 0 && (
                   <div>
-                    <p className="px-2 mb-2 text-xs font-semibold uppercase tracking-wider text-[#9B9E96]">
+                    <p className="px-2 mb-2 text-xs font-semibold uppercase tracking-wider text-[#646860]">
                       Documents ({matchingDocuments.length})
                     </p>
                     <div className="space-y-1">
@@ -238,7 +238,7 @@ export const GlobalSearchModal: React.FC = () => {
                                   Expiring
                                 </Badge>
                               )}
-                              <ChevronRight className={`w-4 h-4 ${isFocused ? 'text-[#1D5FF0] translate-x-0.5' : 'text-[#9B9E96]'} transition-all`} />
+                              <ChevronRight className={`w-4 h-4 ${isFocused ? 'text-[#1D5FF0] translate-x-0.5' : 'text-[#646860]'} transition-all`} />
                             </div>
                           </div>
                         );
@@ -250,7 +250,7 @@ export const GlobalSearchModal: React.FC = () => {
                 {/* Matching Folders */}
                 {matchingFolders.length > 0 && (
                   <div>
-                    <p className="px-2 mb-2 text-xs font-semibold uppercase tracking-wider text-[#9B9E96]">
+                    <p className="px-2 mb-2 text-xs font-semibold uppercase tracking-wider text-[#646860]">
                       Folders ({matchingFolders.length})
                     </p>
                     <div className="space-y-1">
@@ -272,7 +272,7 @@ export const GlobalSearchModal: React.FC = () => {
                               <CategoryIcon category={folder.category} size="sm" />
                               <div>
                                 <p className="text-xs font-semibold text-[#20211F]">{folder.name}</p>
-                                <p className="text-[11px] text-[#9B9E96]">{folder.documentCount} documents stored</p>
+                                <p className="text-[11px] text-[#646860]">{folder.documentCount} documents stored</p>
                               </div>
                             </div>
                             <span className="text-xs font-semibold text-[#1D5FF0] flex items-center gap-1">

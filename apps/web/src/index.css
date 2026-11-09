@@ -46,8 +46,25 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: #F6F6F2;
-  color: #20211F;
+  color: #1E201D;
   -webkit-tap-highlight-color: transparent;
+}
+
+/* Accessible and styled selection */
+::selection {
+  background-color: #1D5FF0;
+  color: #FFFFFF;
+}
+
+/* Clean, high-visibility focus ring matching design system */
+:focus-visible {
+  outline: 2px solid #1D5FF0;
+  outline-offset: 2px;
+}
+
+/* Tabular figures for dates, metrics, and identifiers */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
 }
 
 /* Custom smooth touch behaviors */

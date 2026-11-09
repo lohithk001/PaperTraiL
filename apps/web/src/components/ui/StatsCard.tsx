@@ -30,16 +30,16 @@ export const StatsCard: React.FC<StatsCardProps> = ({
       )}
     >
       <div className="flex items-center justify-between">
-        <span className="text-xs font-medium text-[#9B9E96]">{label}</span>
+        <span className="text-xs font-semibold text-[#646860]">{label}</span>
         {icon && (
           <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ backgroundColor: accent ? `${accent}18` : '#F0F0EA' }}>
-            <span style={{ color: accent || '#9B9E96' }}>{icon}</span>
+            <span style={{ color: accent || '#646860' }}>{icon}</span>
           </div>
         )}
       </div>
       <div>
-        <div className="text-2xl font-semibold text-[#20211F] tracking-tight">{value}</div>
-        {sub && <div className="text-xs text-[#9B9E96] mt-0.5">{sub}</div>}
+        <div className="text-2xl font-bold text-[#1E201D] tracking-tight tabular-nums">{value}</div>
+        {sub && <div className="text-xs text-[#646860] mt-0.5">{sub}</div>}
       </div>
     </div>
   );

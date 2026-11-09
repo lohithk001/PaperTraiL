@@ -47,12 +47,12 @@ export const ReminderCard: React.FC<ReminderCardProps> = ({
 
       {/* Content */}
       <div className="flex-1 min-w-0">
-        <p className={cn('text-sm font-medium text-[#20211F]', isCompleted && 'line-through text-[#9B9E96]')}>
+        <p className={cn('text-sm font-medium text-[#20211F]', isCompleted && 'line-through text-[#646860]')}>
           {title}
         </p>
-        <p className="text-xs text-[#9B9E96] mt-0.5 truncate">{documentTitle}</p>
+        <p className="text-xs text-[#646860] mt-0.5 truncate">{documentTitle}</p>
         <div className="flex items-center gap-2 mt-2">
-          <span className="text-xs text-[#9B9E96]">{dueDate}</span>
+          <span className="text-xs text-[#646860]">{dueDate}</span>
           {!isCompleted && (
             <Badge variant={urgency === 'danger' ? 'danger' : urgency === 'warning' ? 'warning' : 'default'} size="sm">
               {daysLeft < 0 ? 'Overdue' : `${daysLeft}d left`}
@@ -64,7 +64,7 @@ export const ReminderCard: React.FC<ReminderCardProps> = ({
       {/* Delete */}
       <button
         onClick={onDelete}
-        className="w-7 h-7 rounded-lg flex items-center justify-center text-[#9B9E96] hover:text-[#DC2626] hover:bg-[#FEE2E2] transition-all cursor-pointer shrink-0"
+        className="w-7 h-7 rounded-lg flex items-center justify-center text-[#646860] hover:text-[#DC2626] hover:bg-[#FEE2E2] transition-all cursor-pointer shrink-0"
       >
         <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

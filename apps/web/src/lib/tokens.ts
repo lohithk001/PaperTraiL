@@ -23,10 +23,10 @@ export const tokens = {
   powder: '#DCE8F8',    // Data / stats
   butter: '#F4EDD5',    // Reminder / warning
 
-  // Text
-  textPrimary: '#20211F',
-  textSecondary: '#6B6E66',
-  textTertiary: '#9B9E96',
+  // Text (WCAG 2.1 AA compliant contrast ratios ≥ 4.5:1 on light surfaces)
+  textPrimary: '#1E201D',
+  textSecondary: '#4A4E46',
+  textTertiary: '#646860',
   textInverse: '#FFFFFF',
 
   // Border
@@ -108,5 +108,9 @@ export const categoryColors: Record<string, {
 };
 
 export function getCategoryColor(category: string) {
-  return categoryColors[category] ?? categoryColors['Other'];
+  const base = categoryColors[category] ?? categoryColors['Other'];
+  return {
+    ...base,
+    accent: base.icon || base.text,
+  };
 }

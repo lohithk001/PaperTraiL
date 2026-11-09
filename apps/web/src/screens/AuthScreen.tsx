@@ -207,7 +207,7 @@ export const AuthScreen: React.FC = () => {
           {/* OR Divider */}
           <div className="flex items-center gap-3">
             <div className="flex-1 h-px bg-[#E6E6E0]" />
-            <span className="text-[11px] font-semibold text-[#9B9E96] tracking-wider uppercase">OR</span>
+            <span className="text-[11px] font-semibold text-[#646860] tracking-wider uppercase">OR</span>
             <div className="flex-1 h-px bg-[#E6E6E0]" />
           </div>
 
@@ -218,27 +218,27 @@ export const AuthScreen: React.FC = () => {
                 <div>
                   <div className="flex items-center justify-between text-xs mb-1">
                     <label className="font-semibold text-[#20211F]">First name</label>
-                    <span className="text-[#9B9E96] text-[10px]">Optional</span>
+                    <span className="text-[#646860] text-[10px]">Optional</span>
                   </div>
                   <input
                     type="text"
                     placeholder="First name"
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
-                    className="w-full h-10 px-3 rounded-xl border border-[#E6E6E0] bg-white text-xs text-[#20211F] placeholder:text-[#9B9E96] focus:outline-none focus:border-[#1D5FF0] focus:ring-1 focus:ring-[#1D5FF0]/20 transition-all"
+                    className="w-full h-10 px-3 rounded-xl border border-[#E6E6E0] bg-white text-xs text-[#20211F] placeholder:text-[#646860] focus:outline-none focus:border-[#1D5FF0] focus:ring-1 focus:ring-[#1D5FF0]/20 transition-all"
                   />
                 </div>
                 <div>
                   <div className="flex items-center justify-between text-xs mb-1">
                     <label className="font-semibold text-[#20211F]">Last name</label>
-                    <span className="text-[#9B9E96] text-[10px]">Optional</span>
+                    <span className="text-[#646860] text-[10px]">Optional</span>
                   </div>
                   <input
                     type="text"
                     placeholder="Last name"
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
-                    className="w-full h-10 px-3 rounded-xl border border-[#E6E6E0] bg-white text-xs text-[#20211F] placeholder:text-[#9B9E96] focus:outline-none focus:border-[#1D5FF0] focus:ring-1 focus:ring-[#1D5FF0]/20 transition-all"
+                    className="w-full h-10 px-3 rounded-xl border border-[#E6E6E0] bg-white text-xs text-[#20211F] placeholder:text-[#646860] focus:outline-none focus:border-[#1D5FF0] focus:ring-1 focus:ring-[#1D5FF0]/20 transition-all"
                   />
                 </div>
               </div>
@@ -252,7 +252,7 @@ export const AuthScreen: React.FC = () => {
                 placeholder="Enter your email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full h-10 px-3.5 rounded-xl border border-[#E6E6E0] bg-white text-xs text-[#20211F] placeholder:text-[#9B9E96] focus:outline-none focus:border-[#1D5FF0] focus:ring-1 focus:ring-[#1D5FF0]/20 transition-all"
+                className="w-full h-10 px-3.5 rounded-xl border border-[#E6E6E0] bg-white text-xs text-[#20211F] placeholder:text-[#646860] focus:outline-none focus:border-[#1D5FF0] focus:ring-1 focus:ring-[#1D5FF0]/20 transition-all"
               />
             </div>
 
@@ -276,12 +276,12 @@ export const AuthScreen: React.FC = () => {
                   placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full h-10 pl-3.5 pr-10 rounded-xl border border-[#E6E6E0] bg-white text-xs text-[#20211F] placeholder:text-[#9B9E96] focus:outline-none focus:border-[#1D5FF0] focus:ring-1 focus:ring-[#1D5FF0]/20 transition-all"
+                  className="w-full h-10 pl-3.5 pr-10 rounded-xl border border-[#E6E6E0] bg-white text-xs text-[#20211F] placeholder:text-[#646860] focus:outline-none focus:border-[#1D5FF0] focus:ring-1 focus:ring-[#1D5FF0]/20 transition-all"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9B9E96] hover:text-[#20211F] transition-colors p-1"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#646860] hover:text-[#20211F] transition-colors p-1"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>

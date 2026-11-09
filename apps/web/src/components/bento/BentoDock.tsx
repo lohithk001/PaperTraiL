@@ -127,7 +127,7 @@ export const BentoDock: React.FC = () => {
 
         <button
           onClick={handleLogout}
-          className="w-11 h-11 rounded-2xl text-[#9B9E96] hover:text-[#DC2626] hover:bg-[#FEE2E2] flex items-center justify-center transition-all cursor-pointer"
+          className="w-11 h-11 rounded-2xl text-[#646860] hover:text-[#DC2626] hover:bg-[#FEE2E2] flex items-center justify-center transition-all cursor-pointer"
           title="Sign Out"
         >
           <LogOut className="w-5 h-5" strokeWidth={1.75} />
